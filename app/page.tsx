@@ -1,65 +1,211 @@
-import Image from "next/image";
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+const BR_HITS = [
+  { artist: 'Zé Vaqueiro', song: 'Ainda Tem', views: '4.8M' },
+  { artist: 'Gusttavo Lima', song: 'Bloqueado e Deletado', views: '6.2M' },
+  { artist: 'Simone Mendes', song: 'Cintia', views: '3.9M' },
+  { artist: 'MC Daniel', song: 'Minha Vida é Uma Festa', views: '8.1M' },
+  { artist: 'Anitta', song: 'Funk Rave', views: '12.4M' },
+  { artist: 'Luisa Sonza', song: 'Chico', views: '5.7M' },
+  { artist: 'Thiaguinho', song: 'Só Pra Te Ver', views: '3.2M' },
+  { artist: 'Dilsinho', song: 'Calma', views: '2.8M' },
+  { artist: 'Wesley Safadão', song: 'Camarote', views: '2.1M' },
+  { artist: 'Marília Mendonça', song: 'Ausência', views: '9.3M' },
+];
+
+const GLOBAL_HITS = [
+  { artist: 'Taylor Swift', song: 'Cruel Summer', views: '45M' },
+  { artist: 'The Weeknd', song: 'Blinding Lights', views: '38M' },
+  { artist: 'Bad Bunny', song: 'Tití Me Preguntó', views: '29M' },
+  { artist: 'Beyoncé', song: 'Texas Hold Em', views: '22M' },
+  { artist: 'Drake', song: 'Rich Baby Daddy', views: '18M' },
+  { artist: 'Billie Eilish', song: 'Bad Guy', views: '35M' },
+  { artist: 'Ed Sheeran', song: 'Shape of You', views: '41M' },
+  { artist: 'Sabrina Carpenter', song: 'Espresso', views: '27M' },
+  { artist: 'Ariana Grande', song: 'thank u, next', views: '31M' },
+  { artist: 'Harry Styles', song: 'As It Was', views: '44M' },
+];
+
+const ORDINALS = ['1º', '2º', '3º', '4º', '5º', '6º', '7º', '8º', '9º', '10º'];
+
+function ArtistCard({ item, index, onClick }: { item: { artist: string; song: string; views: string }, index: number, onClick: () => void }) {
+  const [imgSrc, setImgSrc] = useState('');
+
+  useEffect(() => {
+    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artist + ' ' + item.song)}&entity=song&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.results?.[0]?.artworkUrl100) {
+          setImgSrc(data.results[0].artworkUrl100.replace('100x100bb', '300x300bb'));
+        }
+      })
+      .catch(() => {});
+  }, [item.artist, item.song]);
+
+  const isTop3 = index < 3;
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: '#1a1a1a',
+        borderRadius: '12px',
+        padding: '12px',
+        cursor: 'pointer',
+        border: isTop3 ? '1px solid #FFD700' : '1px solid #b8860b',
+        transition: 'transform 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
+      onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+    >
+      {/* Número ordinal */}
+      <span style={{
+        minWidth: '32px',
+        fontSize: '1.1rem',
+        fontWeight: 'bold',
+        color: isTop3 ? '#FFD700' : '#888',
+        textAlign: 'center',
+      }}>
+        {ORDINALS[index]}
+      </span>
+
+      {/* Foto do artista */}
+      <div style={{
+        width: '56px',
+        height: '56px',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        flexShrink: 0,
+        background: '#2a2a2a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '1.5rem',
+      }}>
+        {imgSrc
+          ? <img src={imgSrc} alt={item.artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : '🎵'
+        }
+      </div>
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          fontWeight: '600', fontSize: '0.88rem', color: 'white',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+        }}>{item.song}</p>
+        <p style={{
+          color: '#888', fontSize: '0.78rem',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+        }}>{item.artist}</p>
+        <p style={{ color: '#FFD700', fontSize: '0.72rem', marginTop: '3px' }}>👁 {item.views}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
+  const [search, setSearch] = useState('');
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!search.trim()) return;
+    const parts = search.trim().split(' ');
+    const artist = parts[0];
+    const song = parts.slice(1).join(' ') || parts[0];
+    router.push(`/letra/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
+  };
+
+  const goToLyric = (artist: string, song: string) => {
+    router.push(`/letra/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
+  };
+
+  const gridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px',
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+
+      {/* Hero */}
+      <div style={{ textAlign: 'center', padding: '40px 0 30px' }}>
+        <h1 style={{
+          fontSize: '3rem', fontWeight: 'bold',
+          background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          marginBottom: '10px'
+        }}>Hits de Ouro</h1>
+        <p style={{ color: '#888', fontSize: '1.1rem', marginBottom: '24px' }}>
+          Encontre letras das suas músicas favoritas
+        </p>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px', maxWidth: '600px', margin: '0 auto' }}>
+          <input
+            type="text" value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Digite o artista e a música... ex: Anitta Funk Rave"
+            style={{
+              flex: 1, padding: '12px 16px', borderRadius: '12px',
+              background: '#1a1a1a', border: '1px solid #b8860b',
+              color: 'white', fontSize: '0.95rem', outline: 'none'
+            }}
+          />
+          <button type="submit" style={{
+            padding: '12px 24px', borderRadius: '12px',
+            background: 'linear-gradient(135deg, #FFD700, #b8860b)',
+            color: 'black', fontWeight: 'bold', border: 'none',
+            cursor: 'pointer', fontSize: '0.95rem'
+          }}>Buscar</button>
+        </form>
+      </div>
+
+      {/* Top 10 Brasileiras */}
+      <section style={{ marginBottom: '48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <img src="https://flagcdn.com/w40/br.png" alt="Brasil" style={{ height: '28px', borderRadius: '4px' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
+            Top 10 Músicas Brasileiras em Alta
+          </h2>
+          <span style={{
+            marginLeft: 'auto', fontSize: '0.75rem',
+            background: 'rgba(0,100,0,0.3)', color: '#4ade80',
+            padding: '4px 12px', borderRadius: '999px'
+          }}>🟢 {new Date().toLocaleString('pt-BR', { month: 'long' })}</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div style={gridStyle}>
+          {BR_HITS.map((item, i) => (
+            <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+          ))}
         </div>
-      </main>
+      </section>
+
+      {/* Top 10 Globais */}
+      <section style={{ marginBottom: '48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <span style={{ fontSize: '1.8rem' }}>🌍</span>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
+            Top 10 Clássicos Globais
+          </h2>
+          <span style={{
+            marginLeft: 'auto', fontSize: '0.75rem',
+            background: 'rgba(0,0,100,0.3)', color: '#60a5fa',
+            padding: '4px 12px', borderRadius: '999px'
+          }}>🔵 {new Date().toLocaleString('pt-BR', { month: 'long' })}</span>
+        </div>
+        <div style={gridStyle}>
+          {GLOBAL_HITS.map((item, i) => (
+            <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+          ))}
+        </div>
+      </section>
+
     </div>
   );
 }
