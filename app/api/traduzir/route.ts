@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 async function translateChunk(text: string): Promise<string> {
-  const r = await fetch(
-    'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|pt-BR',
-    { signal: AbortSignal.timeout(5000) }
-  );
-  const d = await r.json();
-  if (d?.responseData?.translatedText && !d.responseData.translatedText.includes('QUERY LENGTH')) {
-    return d.responseData.translatedText;
+  try {
+    const r = await fetch(
+      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|pt-BR',
+      { signal: AbortSignal.timeout(5000) }
+    );
+    const d = await r.json();
+    const result = d?.responseData?.translatedText || '';
+    if (
+      result.includes('MYMEMORY WARNING') ||
+      result.includes('QUERY LENGTH') ||
+      result.includes('YOU USED ALL')
+    ) {
+      return text;
+    }
+    return result || text;
+  } catch {
+    return text;
   }
-  return text;
 }
 
 export async function GET(request: NextRequest) {
