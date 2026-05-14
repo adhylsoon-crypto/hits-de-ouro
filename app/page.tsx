@@ -32,77 +32,35 @@ const ORDINALS = ['1º', '2º', '3º', '4º', '5º', '6º', '7º', '8º', '9º',
 
 function ArtistCard({ item, index, onClick }: { item: { artist: string; song: string; views: string }, index: number, onClick: () => void }) {
   const [imgSrc, setImgSrc] = useState('');
-
   useEffect(() => {
-    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(item.artist + ' ' + item.song)}&entity=song&limit=1`)
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(item.artist + ' ' + item.song) + '&entity=song&limit=1')
       .then(r => r.json())
       .then(data => {
         if (data.results?.[0]?.artworkUrl100) {
           setImgSrc(data.results[0].artworkUrl100.replace('100x100bb', '300x300bb'));
         }
-      })
-      .catch(() => {});
+      }).catch(() => {});
   }, [item.artist, item.song]);
 
   const isTop3 = index < 3;
-
   return (
-    <div
-      onClick={onClick}
-      style={{
-        background: '#1a1a1a',
-        borderRadius: '12px',
-        padding: '12px',
-        cursor: 'pointer',
-        border: isTop3 ? '1px solid #FFD700' : '1px solid #b8860b',
-        transition: 'transform 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-      }}
+    <div onClick={onClick} style={{
+      background: '#1a1a1a', borderRadius: '12px', padding: '12px',
+      cursor: 'pointer', border: isTop3 ? '1px solid #FFD700' : '1px solid #b8860b',
+      transition: 'transform 0.2s', display: 'flex', alignItems: 'center', gap: '12px',
+    }}
       onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
       onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
     >
-      {/* Número ordinal */}
-      <span style={{
-        minWidth: '32px',
-        fontSize: '1.1rem',
-        fontWeight: 'bold',
-        color: isTop3 ? '#FFD700' : '#888',
-        textAlign: 'center',
-      }}>
+      <span style={{ minWidth: '32px', fontSize: '1.1rem', fontWeight: 'bold', color: isTop3 ? '#FFD700' : '#888', textAlign: 'center' }}>
         {ORDINALS[index]}
       </span>
-
-      {/* Foto do artista */}
-      <div style={{
-        width: '56px',
-        height: '56px',
-        borderRadius: '10px',
-        overflow: 'hidden',
-        flexShrink: 0,
-        background: '#2a2a2a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.5rem',
-      }}>
-        {imgSrc
-          ? <img src={imgSrc} alt={item.artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : '🎵'
-        }
+      <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+        {imgSrc ? <img src={imgSrc} alt={item.artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🎵'}
       </div>
-
-      {/* Infos */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          fontWeight: '600', fontSize: '0.88rem', color: 'white',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-        }}>{item.song}</p>
-        <p style={{
-          color: '#888', fontSize: '0.78rem',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-        }}>{item.artist}</p>
+        <p style={{ fontWeight: '600', fontSize: '0.88rem', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.song}</p>
+        <p style={{ color: '#888', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.artist}</p>
         <p style={{ color: '#FFD700', fontSize: '0.72rem', marginTop: '3px' }}>👁 {item.views}</p>
       </div>
     </div>
@@ -111,95 +69,122 @@ function ArtistCard({ item, index, onClick }: { item: { artist: string; song: st
 
 export default function Home() {
   const [search, setSearch] = useState('');
+  const [suggestions, setSuggestions] = useState<{artist: string, song: string}[]>([]);
   const router = useRouter();
+
+  const allSongs = [...BR_HITS, ...GLOBAL_HITS];
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (value.length < 2) { setSuggestions([]); return; }
+    const lower = value.toLowerCase();
+    const filtered = allSongs.filter(s =>
+      s.artist.toLowerCase().includes(lower) || s.song.toLowerCase().includes(lower)
+    ).slice(0, 5);
+    setSuggestions(filtered);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!search.trim()) return;
+    setSuggestions([]);
     const parts = search.trim().split(' ');
     const artist = parts[0];
     const song = parts.slice(1).join(' ') || parts[0];
-    router.push(`/letra/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
+    router.push('/letra/' + encodeURIComponent(artist) + '/' + encodeURIComponent(song));
   };
 
   const goToLyric = (artist: string, song: string) => {
-    router.push(`/letra/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
-  };
-
-  const gridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
+    setSuggestions([]);
+    setSearch('');
+    router.push('/letra/' + encodeURIComponent(artist) + '/' + encodeURIComponent(song));
   };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
 
-      {/* Hero */}
       <div style={{ textAlign: 'center', padding: '40px 0 30px' }}>
-        <h1 style={{
-          fontSize: '3rem', fontWeight: 'bold',
-          background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          marginBottom: '10px'
-        }}>Hits de Ouro</h1>
+        <h1 style={{ fontSize: '3rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '10px' }}>
+          Hits de Ouro
+        </h1>
         <p style={{ color: '#888', fontSize: '1.1rem', marginBottom: '24px' }}>
           Encontre letras das suas músicas favoritas
         </p>
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px', maxWidth: '600px', margin: '0 auto' }}>
-          <input
-            type="text" value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Digite o artista e a música... ex: Anitta Funk Rave"
-            style={{
-              flex: 1, padding: '12px 16px', borderRadius: '12px',
+
+        <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Ex: Anitta Funk Rave ou Taylor Swift Cruel Summer"
+              style={{
+                flex: 1, padding: '12px 16px', borderRadius: '12px',
+                background: '#1a1a1a', border: '1px solid #b8860b',
+                color: 'white', fontSize: '0.95rem', outline: 'none'
+              }}
+            />
+            <button type="submit" style={{
+              padding: '12px 24px', borderRadius: '12px',
+              background: 'linear-gradient(135deg, #FFD700, #b8860b)',
+              color: 'black', fontWeight: 'bold', border: 'none',
+              cursor: 'pointer', fontSize: '0.95rem'
+            }}>Buscar</button>
+          </form>
+
+          {suggestions.length > 0 && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: '90px',
               background: '#1a1a1a', border: '1px solid #b8860b',
-              color: 'white', fontSize: '0.95rem', outline: 'none'
-            }}
-          />
-          <button type="submit" style={{
-            padding: '12px 24px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, #FFD700, #b8860b)',
-            color: 'black', fontWeight: 'bold', border: 'none',
-            cursor: 'pointer', fontSize: '0.95rem'
-          }}>Buscar</button>
-        </form>
+              borderRadius: '12px', marginTop: '4px', zIndex: 100, overflow: 'hidden'
+            }}>
+              {suggestions.map((s, i) => (
+                <div key={i} onClick={() => goToLyric(s.artist, s.song)} style={{
+                  padding: '10px 16px', cursor: 'pointer', borderBottom: '1px solid #2a2a2a',
+                  display: 'flex', gap: '8px', alignItems: 'center'
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span style={{ fontSize: '1rem' }}>🎵</span>
+                  <div>
+                    <p style={{ color: 'white', fontSize: '0.9rem', margin: 0 }}>{s.song}</p>
+                    <p style={{ color: '#888', fontSize: '0.8rem', margin: 0 }}>{s.artist}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <p style={{ color: '#666', fontSize: '0.8rem', marginTop: '10px' }}>
+          Digite o nome do artista seguido da música
+        </p>
       </div>
 
-      {/* Top 10 Brasileiras */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <img src="https://flagcdn.com/w40/br.png" alt="Brasil" style={{ height: '28px', borderRadius: '4px' }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
-            Top 10 Músicas Brasileiras em Alta
-          </h2>
-          <span style={{
-            marginLeft: 'auto', fontSize: '0.75rem',
-            background: 'rgba(0,100,0,0.3)', color: '#4ade80',
-            padding: '4px 12px', borderRadius: '999px'
-          }}>🟢 {new Date().toLocaleString('pt-BR', { month: 'long' })}</span>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top 10 Músicas Brasileiras em Alta</h2>
+          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(0,100,0,0.3)', color: '#4ade80', padding: '4px 12px', borderRadius: '999px' }}>
+            🟢 {new Date().toLocaleString('pt-BR', { month: 'long' })}
+          </span>
         </div>
-        <div style={gridStyle}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           {BR_HITS.map((item, i) => (
             <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
           ))}
         </div>
       </section>
 
-      {/* Top 10 Globais */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <span style={{ fontSize: '1.8rem' }}>🌍</span>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
-            Top 10 Clássicos Globais
-          </h2>
-          <span style={{
-            marginLeft: 'auto', fontSize: '0.75rem',
-            background: 'rgba(0,0,100,0.3)', color: '#60a5fa',
-            padding: '4px 12px', borderRadius: '999px'
-          }}>🔵 {new Date().toLocaleString('pt-BR', { month: 'long' })}</span>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top 10 Clássicos Globais</h2>
+          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(0,0,100,0.3)', color: '#60a5fa', padding: '4px 12px', borderRadius: '999px' }}>
+            🔵 {new Date().toLocaleString('pt-BR', { month: 'long' })}
+          </span>
         </div>
-        <div style={gridStyle}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           {GLOBAL_HITS.map((item, i) => (
             <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
           ))}
