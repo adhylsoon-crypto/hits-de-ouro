@@ -5,11 +5,6 @@ export const metadata: Metadata = {
   title: "Hits de Ouro - Letras de Músicas",
   description: "Encontre letras de músicas brasileiras e internacionais no Hits de Ouro.",
   keywords: "letras de músicas, hits, músicas brasileiras, traduções",
-  openGraph: {
-    title: "Hits de Ouro - Letras de Músicas",
-    description: "Encontre letras de músicas brasileiras e internacionais",
-    type: "website",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,14 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <img src="/logo.png" alt="Hits de Ouro" style={{ height: '48px', width: 'auto' }} />
             </a>
             <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <a href="/" style={{ color: '#aaa', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#FFD700')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
+              <a href="/" style={{ color: '#aaa', textDecoration: 'none', fontSize: '0.9rem' }}>
                 Início
               </a>
-              <a href="/contato" style={{ color: '#aaa', textDecoration: 'none', fontSize: '0.9rem' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#FFD700')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
+              <a href="/contato" style={{ color: '#aaa', textDecoration: 'none', fontSize: '0.9rem' }}>
                 Contato
               </a>
               <a href="/login" style={{
