@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-async function translateChunk(text: string): Promise<string> {
+async function translateChunk(text: string, lang: string): Promise<string> {
   try {
     const r = await fetch(
-      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|pt-BR',
+      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=auto|' + lang,
       { signal: AbortSignal.timeout(5000) }
     );
     const d = await r.json();
     const result = d?.responseData?.translatedText || '';
-    if (
-      result.includes('MYMEMORY WARNING') ||
-      result.includes('QUERY LENGTH') ||
-      result.includes('YOU USED ALL')
-    ) {
+    if (result.includes('MYMEMORY WARNING') || result.includes('QUERY LENGTH') || result.includes('YOU USED ALL')) {
       return text;
     }
     return result || text;
@@ -24,13 +20,13 @@ async function translateChunk(text: string): Promise<string> {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get('text') || '';
+  const lang = searchParams.get('lang') || 'pt-BR';
   if (!text) return NextResponse.json({ translated: '' });
 
   try {
     const lines = text.split('\n');
     const chunks: string[] = [];
     let current = '';
-
     for (const line of lines) {
       if ((current + '\n' + line).length > 400) {
         if (current) chunks.push(current.trim());
@@ -40,11 +36,8 @@ export async function GET(request: NextRequest) {
       }
     }
     if (current) chunks.push(current.trim());
-
-    const results = await Promise.all(chunks.map(chunk => translateChunk(chunk)));
-    const translated = results.join('\n');
-
-    return NextResponse.json({ translated });
+    const results = await Promise.all(chunks.map(chunk => translateChunk(chunk, lang)));
+    return NextResponse.json({ translated: results.join('\n') });
   } catch {
     return NextResponse.json({ translated: 'Traducao temporariamente indisponivel.' });
   }
