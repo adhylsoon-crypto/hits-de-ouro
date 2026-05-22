@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 async function translateChunk(text: string, from: string, to: string): Promise<string> {
-  if (from === to) return '';
   try {
-    const langpair = from + '|' + to;
     const r = await fetch(
-      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + langpair,
+      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + from + '|' + to,
       { signal: AbortSignal.timeout(6000) }
     );
     const d = await r.json();
     const result = d?.responseData?.translatedText || '';
+    const upper = result.toUpperCase();
     if (
-      result.toUpperCase().includes('MYMEMORY') ||
-      result.toUpperCase().includes('INVALID') ||
-      result.toUpperCase().includes('QUERY LENGTH') ||
-      result.toUpperCase().includes('YOU USED ALL') ||
-      result.toUpperCase().includes('PLEASE SELECT') ||
-      result.toUpperCase().includes('DISTINCT')
+      upper.includes('MYMEMORY') ||
+      upper.includes('INVALID') ||
+      upper.includes('QUERY LENGTH') ||
+      upper.includes('YOU USED ALL') ||
+      upper.includes('PLEASE SELECT') ||
+      upper.includes('DISTINCT')
     ) {
       return '';
     }
@@ -29,11 +28,15 @@ async function translateChunk(text: string, from: string, to: string): Promise<s
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get('text') || '';
-  const to = searchParams.get('lang') || 'pt-BR';
-  const from = searchParams.get('from') || 'en';
+  const to = searchParams.get('lang') || 'en';
+  const fromParam = searchParams.get('from') || 'en';
 
   if (!text) return NextResponse.json({ translated: '' });
-  if (from === to || (from === 'pt' && to === 'pt-BR') || (from === 'pt-BR' && to === 'pt-BR')) {
+
+  const fromCode = fromParam === 'pt' ? 'pt-BR' : fromParam;
+  const toCode = to === 'pt' ? 'pt-BR' : to;
+
+  if (fromCode === toCode) {
     return NextResponse.json({ translated: '' });
   }
 
@@ -52,7 +55,9 @@ export async function GET(request: NextRequest) {
     }
     if (current) chunks.push(current.trim());
 
-    const results = await Promise.all(chunks.map(chunk => translateChunk(chunk, from, to)));
+    const results = await Promise.all(
+      chunks.map(chunk => translateChunk(chunk, fromCode, toCode))
+    );
     return NextResponse.json({ translated: results.join('\n') });
   } catch {
     return NextResponse.json({ translated: '' });
