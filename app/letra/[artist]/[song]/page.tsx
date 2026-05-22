@@ -2,37 +2,23 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-const LANGUAGES = [
-  { code: 'pt-BR', label: '🇧🇷 Português' },
-  { code: 'en', label: '🇺🇸 English' },
-  { code: 'es', label: '🇪🇸 Español' },
-  { code: 'fr', label: '🇫🇷 Français' },
-  { code: 'it', label: '🇮🇹 Italiano' },
-  { code: 'de', label: '🇩🇪 Deutsch' },
-];
-
 export default function LetraPage() {
   const params = useParams();
   const artist = decodeURIComponent(params.artist as string);
   const song = decodeURIComponent(params.song as string);
   const [lyrics, setLyrics] = useState('');
   const [lyricsLines, setLyricsLines] = useState<string[]>([]);
-  const [translatedLines, setTranslatedLines] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [copied, setCopied] = useState(false);
   const [albumImg, setAlbumImg] = useState('');
-  const [translating, setTranslating] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('pt-BR');
+  const [isPt, setIsPt] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
     setLyrics('');
-    setTranslatedLines([]);
-    setShowTranslation(false);
 
     fetch('/api/letra?artist=' + encodeURIComponent(artist) + '&song=' + encodeURIComponent(song))
       .then(r => r.json())
@@ -40,13 +26,10 @@ export default function LetraPage() {
         if (data?.lyrics) {
           setLyrics(data.lyrics);
           setLyricsLines(data.lyrics.split('\n'));
-          const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele'];
+          const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele', 'meu', 'minha'];
           const lower = data.lyrics.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           const ptCount = ptWords.filter(w => lower.includes(' ' + w + ' ')).length;
-          if (ptCount < 3) {
-            setSelectedLang('pt-BR');
-            translateLyrics(data.lyrics, 'pt-BR');
-          }
+          setIsPt(ptCount >= 3);
         } else {
           setNotFound(true);
         }
@@ -64,25 +47,6 @@ export default function LetraPage() {
         }
       }).catch(() => {});
   }, [artist, song]);
-
-  const translateLyrics = (text: string, lang: string) => {
-    setTranslating(true);
-    setShowTranslation(true);
-    setTranslatedLines([]);
-    fetch('/api/traduzir?text=' + encodeURIComponent(text) + '&lang=' + lang)
-      .then(r => r.json())
-      .then(td => {
-        if (td?.translated) {
-          setTranslatedLines(td.translated.split('\n'));
-        }
-        setTranslating(false);
-      })
-      .catch(() => setTranslating(false));
-  };
-
-  const handleTranslate = () => {
-    translateLyrics(lyrics, selectedLang);
-  };
 
   const youtubeUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(artist + ' ' + song + ' oficial');
 
@@ -114,25 +78,11 @@ export default function LetraPage() {
             <button onClick={() => { navigator.clipboard.writeText(lyrics); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ padding: '6px 14px', borderRadius: '8px', background: copied ? '#166534' : '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer' }}>
               {copied ? '✅ Copiado!' : '📋 Copiar'}
             </button>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <select
-                value={selectedLang}
-                onChange={e => setSelectedLang(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}
-              >
-                {LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
-              </select>
-              <button onClick={handleTranslate} style={{ padding: '6px 16px', borderRadius: '8px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', border: 'none', color: 'black', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                Traduzir
-              </button>
-              {showTranslation && (
-                <button onClick={() => setShowTranslation(false)} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #555', color: '#888', cursor: 'pointer', fontSize: '0.85rem' }}>
-                  Ocultar
-                </button>
-              )}
-            </div>
+            {!isPt && (
+              <span style={{ marginLeft: 'auto', color: '#888', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                🌍 Tradução automática em português abaixo de cada linha
+              </span>
+            )}
           </div>
 
           {/* Loading */}
@@ -154,27 +104,15 @@ export default function LetraPage() {
             </div>
           )}
 
-          {/* Letra linha por linha com tradução */}
+          {/* Letra */}
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '28px', border: '1px solid #b8860b' }}>
-              {translating && (
-                <p style={{ color: '#888', textAlign: 'center', marginBottom: '16px', fontSize: '0.85rem' }}>
-                  🔄 Traduzindo...
-                </p>
-              )}
               {lyricsLines.map((line, i) => (
-                <div key={i} style={{ marginBottom: line === '' ? '16px' : '4px' }}>
+                <div key={i} style={{ marginBottom: line === '' ? '16px' : '2px' }}>
                   {line !== '' && (
-                    <>
-                      <p style={{ margin: 0, fontSize: fontSize + 'px', color: '#e5e5e5', lineHeight: '1.6' }}>
-                        {line}
-                      </p>
-                      {showTranslation && translatedLines[i] && translatedLines[i] !== '' && (
-                        <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.4', fontStyle: 'italic', marginBottom: '4px' }}>
-                          {translatedLines[i]}
-                        </p>
-                      )}
-                    </>
+                    <p style={{ margin: 0, fontSize: fontSize + 'px', color: '#e5e5e5', lineHeight: '1.8' }}>
+                      {line}
+                    </p>
                   )}
                 </div>
               ))}
@@ -185,12 +123,10 @@ export default function LetraPage() {
         {/* Sidebar anúncios */}
         <div style={{ width: '300px', flexShrink: 0 }}>
           <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
             <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
               <p style={{ color: '#444', fontSize: '0.75rem' }}>PUBLICIDADE</p>
               <p style={{ color: '#333', fontSize: '0.7rem' }}>300 x 250</p>
             </div>
-
             <div style={{ background: '#1a1a1a', borderRadius: '12px', padding: '16px', border: '1px solid #b8860b33' }}>
               {albumImg && <img src={albumImg} alt={song} style={{ width: '100%', borderRadius: '8px', marginBottom: '12px' }} />}
               <p style={{ color: 'white', fontWeight: 'bold', fontSize: '0.9rem' }}>{song}</p>
@@ -199,12 +135,10 @@ export default function LetraPage() {
                 ▶ Ver clipe no YouTube
               </a>
             </div>
-
             <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
               <p style={{ color: '#444', fontSize: '0.75rem' }}>PUBLICIDADE</p>
               <p style={{ color: '#333', fontSize: '0.7rem' }}>300 x 250</p>
             </div>
-
           </div>
         </div>
       </div>
