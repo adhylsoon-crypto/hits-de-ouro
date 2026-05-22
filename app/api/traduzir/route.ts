@@ -1,218 +1,60 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { NextRequest, NextResponse } from 'next/server';
 
-const LANGUAGES = [
-  { code: 'en', label: '🇺🇸 English' },
-  { code: 'es', label: '🇪🇸 Español' },
-  { code: 'fr', label: '🇫🇷 Français' },
-  { code: 'it', label: '🇮🇹 Italiano' },
-  { code: 'de', label: '🇩🇪 Deutsch' },
-  { code: 'pt-BR', label: '🇧🇷 Português' },
-];
-
-function detectLang(text: string): string {
-  const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele', 'meu', 'minha', 'nao', 'sim'];
-  const esWords = ['que', 'con', 'una', 'para', 'por', 'pero', 'ella', 'como', 'todo', 'cuando', 'amor', 'vida'];
-  const enWords = ['the', 'and', 'you', 'your', 'that', 'this', 'with', 'have', 'for', 'not', 'love', 'know'];
-  const pt = ptWords.filter(w => lower.includes(' ' + w + ' ')).length;
-  const es = esWords.filter(w => lower.includes(' ' + w + ' ')).length;
-  const en = enWords.filter(w => lower.includes(' ' + w + ' ')).length;
-  if (pt >= 3) return 'pt';
-  if (es >= en) return 'es';
-  return 'en';
+async function translateChunk(text: string, from: string, to: string): Promise<string> {
+  if (from === to) return '';
+  try {
+    const langpair = from + '|' + to;
+    const r = await fetch(
+      'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + langpair,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    const d = await r.json();
+    const result = d?.responseData?.translatedText || '';
+    if (
+      result.toUpperCase().includes('MYMEMORY') ||
+      result.toUpperCase().includes('INVALID') ||
+      result.toUpperCase().includes('QUERY LENGTH') ||
+      result.toUpperCase().includes('YOU USED ALL') ||
+      result.toUpperCase().includes('PLEASE SELECT') ||
+      result.toUpperCase().includes('DISTINCT')
+    ) {
+      return '';
+    }
+    return result;
+  } catch {
+    return '';
+  }
 }
 
-export default function LetraPage() {
-  const params = useParams();
-  const artist = decodeURIComponent(params.artist as string);
-  const song = decodeURIComponent(params.song as string);
-  const [lyrics, setLyrics] = useState('');
-  const [lyricsLines, setLyricsLines] = useState<string[]>([]);
-  const [translatedLines, setTranslatedLines] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [fontSize, setFontSize] = useState(16);
-  const [copied, setCopied] = useState(false);
-  const [albumImg, setAlbumImg] = useState('');
-  const [translating, setTranslating] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('pt-BR');
-  const [sourceLang, setSourceLang] = useState('en');
-  const [isPt, setIsPt] = useState(false);
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const text = searchParams.get('text') || '';
+  const to = searchParams.get('lang') || 'pt-BR';
+  const from = searchParams.get('from') || 'en';
 
-  useEffect(() => {
-    setLoading(true);
-    setNotFound(false);
-    setLyrics('');
-    setTranslatedLines([]);
-    setShowTranslation(false);
+  if (!text) return NextResponse.json({ translated: '' });
+  if (from === to || (from === 'pt' && to === 'pt-BR') || (from === 'pt-BR' && to === 'pt-BR')) {
+    return NextResponse.json({ translated: '' });
+  }
 
-    fetch('/api/letra?artist=' + encodeURIComponent(artist) + '&song=' + encodeURIComponent(song))
-      .then(r => r.json())
-      .then(data => {
-        if (data?.lyrics) {
-          setLyrics(data.lyrics);
-          setLyricsLines(data.lyrics.split('\n'));
-          const detected = detectLang(data.lyrics);
-          setSourceLang(detected);
-          if (detected === 'pt') {
-            setIsPt(true);
-            setSelectedLang('en');
-          } else if (detected === 'es') {
-            setIsPt(false);
-            setSelectedLang('pt-BR');
-          } else {
-            setIsPt(false);
-            setSelectedLang('pt-BR');
-            doTranslate(data.lyrics, detected, 'pt-BR');
-          }
-        } else {
-          setNotFound(true);
-        }
-        setLoading(false);
-      })
-      .catch(() => { setNotFound(true); setLoading(false); });
-  }, [artist, song]);
+  try {
+    const lines = text.split('\n');
+    const chunks: string[] = [];
+    let current = '';
 
-  useEffect(() => {
-    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + song) + '&entity=song&limit=1')
-      .then(r => r.json())
-      .then(data => {
-        if (data.results?.[0]?.artworkUrl100) {
-          setAlbumImg(data.results[0].artworkUrl100.replace('100x100bb', '600x600bb'));
-        }
-      }).catch(() => {});
-  }, [artist, song]);
+    for (const line of lines) {
+      if ((current + '\n' + line).length > 350) {
+        if (current) chunks.push(current.trim());
+        current = line;
+      } else {
+        current = current ? current + '\n' + line : line;
+      }
+    }
+    if (current) chunks.push(current.trim());
 
-  const doTranslate = (text: string, from: string, to: string) => {
-    setTranslating(true);
-    setShowTranslation(true);
-    setTranslatedLines([]);
-    fetch('/api/traduzir?text=' + encodeURIComponent(text) + '&lang=' + to + '&from=' + from)
-      .then(r => r.json())
-      .then(td => {
-        if (td?.translated) setTranslatedLines(td.translated.split('\n'));
-        setTranslating(false);
-      })
-      .catch(() => setTranslating(false));
-  };
-
-  const handleTranslate = () => {
-    doTranslate(lyrics, sourceLang, selectedLang);
-  };
-
-  const availableLangs = LANGUAGES.filter(l => l.code !== (sourceLang === 'pt' ? 'pt-BR' : sourceLang));
-  const youtubeUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(artist + ' ' + song + ' oficial');
-
-  return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {albumImg && <img src={albumImg} alt={song} style={{ width: '90px', height: '90px', borderRadius: '12px', objectFit: 'cover', border: '2px solid #b8860b' }} />}
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{song}</h1>
-          <p style={{ color: '#aaa', fontSize: '1rem', marginTop: '4px' }}>{artist}</p>
-          <a href="/" style={{ color: '#b8860b', fontSize: '0.85rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
-        </div>
-        <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.9rem' }}>
-          ▶ Ver clipe
-        </a>
-      </div>
-
-      <div style={{ display: 'flex', gap: '24px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button onClick={() => setFontSize(f => Math.max(12, f - 2))} style={{ padding: '6px 14px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer' }}>A-</button>
-            <button onClick={() => setFontSize(f => Math.min(28, f + 2))} style={{ padding: '6px 14px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer' }}>A+</button>
-            <button onClick={() => { navigator.clipboard.writeText(lyrics); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ padding: '6px 14px', borderRadius: '8px', background: copied ? '#166534' : '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer' }}>
-              {copied ? '✅ Copiado!' : '📋 Copiar'}
-            </button>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ color: '#888', fontSize: '0.85rem' }}>Traduzir:</span>
-              <select
-                value={selectedLang}
-                onChange={e => setSelectedLang(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}
-              >
-                {availableLangs.map(l => (
-                  <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
-              </select>
-              <button onClick={handleTranslate} style={{ padding: '6px 16px', borderRadius: '8px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', border: 'none', color: 'black', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                Traduzir
-              </button>
-              {showTranslation && (
-                <button onClick={() => setShowTranslation(false)} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #555', color: '#888', cursor: 'pointer', fontSize: '0.85rem' }}>
-                  Ocultar
-                </button>
-              )}
-            </div>
-          </div>
-
-          {loading && (
-            <div style={{ textAlign: 'center', paddingTop: '100px' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</div>
-              <p style={{ color: '#888' }}>Buscando letra...</p>
-            </div>
-          )}
-
-          {notFound && !loading && (
-            <div style={{ textAlign: 'center', paddingTop: '80px' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>😔</div>
-              <p style={{ color: '#888' }}>Letra nao encontrada.</p>
-              <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '20px', padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                ▶ Buscar no YouTube
-              </a>
-            </div>
-          )}
-
-          {!loading && !notFound && (
-            <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '28px', border: '1px solid #b8860b' }}>
-              {translating && (
-                <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>🔄 Traduzindo...</p>
-              )}
-              {lyricsLines.map((line, i) => (
-                <div key={i} style={{ marginBottom: line === '' ? '16px' : '2px' }}>
-                  {line !== '' && (
-                    <>
-                      <p style={{ margin: 0, fontSize: fontSize + 'px', color: '#e5e5e5', lineHeight: '1.6' }}>{line}</p>
-                      {showTranslation && !translating && translatedLines[i] && translatedLines[i].trim() !== '' && (
-                        <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.5', fontStyle: 'italic', marginBottom: '2px' }}>
-                          {translatedLines[i]}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ width: '300px', flexShrink: 0 }}>
-          <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
-              <p style={{ color: '#444', fontSize: '0.75rem' }}>PUBLICIDADE</p>
-              <p style={{ color: '#333', fontSize: '0.7rem' }}>300 x 250</p>
-            </div>
-            <div style={{ background: '#1a1a1a', borderRadius: '12px', padding: '16px', border: '1px solid #b8860b33' }}>
-              {albumImg && <img src={albumImg} alt={song} style={{ width: '100%', borderRadius: '8px', marginBottom: '12px' }} />}
-              <p style={{ color: 'white', fontWeight: 'bold', fontSize: '0.9rem' }}>{song}</p>
-              <p style={{ color: '#888', fontSize: '0.8rem', marginTop: '4px', marginBottom: '12px' }}>{artist}</p>
-              <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '10px', borderRadius: '8px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.85rem', textAlign: 'center' }}>
-                ▶ Ver clipe no YouTube
-              </a>
-            </div>
-            <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
-              <p style={{ color: '#444', fontSize: '0.75rem' }}>PUBLICIDADE</p>
-              <p style={{ color: '#333', fontSize: '0.7rem' }}>300 x 250</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    const results = await Promise.all(chunks.map(chunk => translateChunk(chunk, from, to)));
+    return NextResponse.json({ translated: results.join('\n') });
+  } catch {
+    return NextResponse.json({ translated: '' });
+  }
 }
