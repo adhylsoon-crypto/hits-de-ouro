@@ -2,6 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+const FEATURED = {
+  artist: 'Anitta',
+  song: 'Funk Rave',
+  description: 'O hit mais tocado da semana no Brasil!',
+  img: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/b0/b4/b0/b0b4b0b4-b0b4-b0b4-b0b4-b0b4b0b4b0b4/cover.jpg/600x600bb.jpg',
+};
+
 const BR_HITS = [
   { artist: 'Zé Vaqueiro', song: 'Ainda Tem', views: '4.8M' },
   { artist: 'Gusttavo Lima', song: 'Bloqueado e Deletado', views: '6.2M' },
@@ -67,11 +74,80 @@ function ArtistCard({ item, index, onClick }: { item: { artist: string; song: st
   );
 }
 
+function FeaturedBanner({ router }: { router: any }) {
+  const [img, setImg] = useState('');
+
+  useEffect(() => {
+    fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(FEATURED.artist + ' ' + FEATURED.song) + '&entity=song&limit=1')
+      .then(r => r.json())
+      .then(data => {
+        if (data.results?.[0]?.artworkUrl100) {
+          setImg(data.results[0].artworkUrl100.replace('100x100bb', '600x600bb'));
+        }
+      }).catch(() => {});
+  }, []);
+
+  return (
+    <div
+      onClick={() => router.push('/letra/' + encodeURIComponent(FEATURED.artist) + '/' + encodeURIComponent(FEATURED.song))}
+      style={{
+        position: 'relative',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        marginBottom: '40px',
+        height: '300px',
+        background: '#1a1a1a',
+        border: '1px solid #b8860b',
+      }}
+    >
+      {img && (
+        <img src={img} alt={FEATURED.song} style={{
+          position: 'absolute', top: 0, left: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover', opacity: 0.35,
+        }} />
+      )}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'linear-gradient(to right, rgba(0,0,0,0.95) 40%, transparent)',
+        display: 'flex', alignItems: 'center', padding: '40px',
+      }}>
+        <div>
+          <span style={{
+            background: 'linear-gradient(135deg,#FFD700,#b8860b)',
+            color: 'black', padding: '4px 12px', borderRadius: '999px',
+            fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '12px',
+            display: 'inline-block'
+          }}>
+            🔥 DESTAQUE DA SEMANA
+          </span>
+          <h2 style={{
+            fontSize: '2.5rem', fontWeight: 'bold', color: 'white',
+            margin: '8px 0 4px', textShadow: '0 2px 10px rgba(0,0,0,0.8)'
+          }}>
+            {FEATURED.song}
+          </h2>
+          <p style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '8px' }}>{FEATURED.artist}</p>
+          <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '20px' }}>{FEATURED.description}</p>
+          <button style={{
+            padding: '12px 28px', borderRadius: '12px',
+            background: 'linear-gradient(135deg,#FFD700,#b8860b)',
+            color: 'black', fontWeight: 'bold', border: 'none',
+            cursor: 'pointer', fontSize: '1rem'
+          }}>
+            🎵 Ver letra
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [search, setSearch] = useState('');
-  const [suggestions, setSuggestions] = useState<{artist: string, song: string}[]>([]);
+  const [suggestions, setSuggestions] = useState<{ artist: string, song: string }[]>([]);
   const router = useRouter();
-
   const allSongs = [...BR_HITS, ...GLOBAL_HITS];
 
   const handleSearchChange = (value: string) => {
@@ -103,19 +179,21 @@ export default function Home() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
 
-      <div style={{ textAlign: 'center', padding: '40px 0 30px' }}>
-        <h1 style={{ fontSize: '3rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '10px' }}>
-          Hits de Ouro
-        </h1>
+      {/* Hero */}
+      <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
+        <h1 style={{
+          fontSize: '3rem', fontWeight: 'bold',
+          background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          marginBottom: '10px'
+        }}>Hits de Ouro</h1>
         <p style={{ color: '#888', fontSize: '1.1rem', marginBottom: '24px' }}>
           Encontre letras das suas músicas favoritas
         </p>
-
         <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
             <input
-              type="text"
-              value={search}
+              type="text" value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Ex: Anitta Funk Rave ou Taylor Swift Cruel Summer"
               style={{
@@ -131,7 +209,6 @@ export default function Home() {
               cursor: 'pointer', fontSize: '0.95rem'
             }}>Buscar</button>
           </form>
-
           {suggestions.length > 0 && (
             <div style={{
               position: 'absolute', top: '100%', left: 0, right: '90px',
@@ -140,13 +217,14 @@ export default function Home() {
             }}>
               {suggestions.map((s, i) => (
                 <div key={i} onClick={() => goToLyric(s.artist, s.song)} style={{
-                  padding: '10px 16px', cursor: 'pointer', borderBottom: '1px solid #2a2a2a',
+                  padding: '10px 16px', cursor: 'pointer',
+                  borderBottom: '1px solid #2a2a2a',
                   display: 'flex', gap: '8px', alignItems: 'center'
                 }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <span style={{ fontSize: '1rem' }}>🎵</span>
+                  <span>🎵</span>
                   <div>
                     <p style={{ color: 'white', fontSize: '0.9rem', margin: 0 }}>{s.song}</p>
                     <p style={{ color: '#888', fontSize: '0.8rem', margin: 0 }}>{s.artist}</p>
@@ -161,6 +239,10 @@ export default function Home() {
         </p>
       </div>
 
+      {/* Banner Destaque */}
+      <FeaturedBanner router={router} />
+
+      {/* Top 10 Brasileiras */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <img src="https://flagcdn.com/w40/br.png" alt="Brasil" style={{ height: '28px', borderRadius: '4px' }} />
@@ -176,6 +258,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Top 10 Globais */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <span style={{ fontSize: '1.8rem' }}>🌍</span>
