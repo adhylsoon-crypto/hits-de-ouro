@@ -53,10 +53,9 @@ const ROCK_HITS = [
 ];
 
 const GENRES = ['Todos', 'Gospel', 'Sertanejo', 'Funk', 'Pop', 'Rock', 'Forro', 'Pagode', 'Rap', 'Reggaeton'];
-
 const ORDINALS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
-function ArtistCard({ item, index, onClick }: { item: { artist: string; song: string; views: string; genre: string }, index: number, onClick: () => void }) {
+function ArtistCard({ item, index, onClick, isMobile }: { item: { artist: string; song: string; views: string; genre: string }, index: number, onClick: () => void, isMobile: boolean }) {
   const [imgSrc, setImgSrc] = useState('');
   useEffect(() => {
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(item.artist + ' ' + item.song) + '&entity=song&limit=1')
@@ -71,32 +70,29 @@ function ArtistCard({ item, index, onClick }: { item: { artist: string; song: st
   const isTop3 = index < 3;
   return (
     <div onClick={onClick} style={{
-      background: '#1a1a1a', borderRadius: '12px', padding: '12px',
+      background: '#1a1a1a', borderRadius: '12px', padding: isMobile ? '10px' : '12px',
       cursor: 'pointer', border: isTop3 ? '1px solid #FFD700' : '1px solid #333',
-      transition: 'transform 0.2s, border-color 0.2s', display: 'flex', alignItems: 'center', gap: '12px',
-    }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = '#FFD700'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = isTop3 ? '#FFD700' : '#333'; }}
-    >
-      <span style={{ minWidth: '32px', fontSize: '1.1rem', fontWeight: 'bold', color: isTop3 ? '#FFD700' : '#888', textAlign: 'center' }}>
+      transition: 'transform 0.2s', display: 'flex', alignItems: 'center', gap: '10px',
+    }}>
+      <span style={{ minWidth: '24px', fontSize: '0.95rem', fontWeight: 'bold', color: isTop3 ? '#FFD700' : '#888', textAlign: 'center' }}>
         {ORDINALS[index]}
       </span>
-      <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+      <div style={{ width: isMobile ? '44px' : '56px', height: isMobile ? '44px' : '56px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {imgSrc ? <img src={imgSrc} alt={item.artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '♪'}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: '600', fontSize: '0.88rem', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.song}</p>
-        <p style={{ color: '#888', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.artist}</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
-          <p style={{ color: '#FFD700', fontSize: '0.72rem' }}>{item.views} views</p>
-          <span style={{ fontSize: '0.65rem', background: 'rgba(184,134,11,0.2)', color: '#b8860b', padding: '1px 6px', borderRadius: '999px' }}>{item.genre}</span>
+        <p style={{ fontWeight: '600', fontSize: isMobile ? '0.82rem' : '0.88rem', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.song}</p>
+        <p style={{ color: '#888', fontSize: isMobile ? '0.72rem' : '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.artist}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+          <p style={{ color: '#FFD700', fontSize: '0.68rem' }}>{item.views}</p>
+          <span style={{ fontSize: '0.6rem', background: 'rgba(184,134,11,0.2)', color: '#b8860b', padding: '1px 5px', borderRadius: '999px' }}>{item.genre}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function FeaturedBanner({ router }: { router: any }) {
+function FeaturedBanner({ router, isMobile }: { router: any, isMobile: boolean }) {
   const [img, setImg] = useState('');
   useEffect(() => {
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(FEATURED.artist + ' ' + FEATURED.song) + '&entity=song&limit=1')
@@ -112,8 +108,8 @@ function FeaturedBanner({ router }: { router: any }) {
     <div
       onClick={() => router.push('/letra/' + encodeURIComponent(FEATURED.artist) + '/' + encodeURIComponent(FEATURED.song))}
       style={{
-        position: 'relative', borderRadius: '20px', overflow: 'hidden',
-        cursor: 'pointer', marginBottom: '0px', height: '300px',
+        position: 'relative', borderRadius: '16px', overflow: 'hidden',
+        cursor: 'pointer', marginBottom: '0px', height: isMobile ? '200px' : '300px',
         background: '#1a1a1a', border: '1px solid #b8860b',
       }}
     >
@@ -126,23 +122,24 @@ function FeaturedBanner({ router }: { router: any }) {
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
         background: 'linear-gradient(to right, rgba(0,0,0,0.95) 40%, transparent)',
-        display: 'flex', alignItems: 'center', padding: '40px',
+        display: 'flex', alignItems: 'center', padding: isMobile ? '20px' : '40px',
       }}>
         <div>
           <span style={{
             background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black',
-            padding: '4px 12px', borderRadius: '999px', fontSize: '0.75rem',
-            fontWeight: 'bold', marginBottom: '12px', display: 'inline-block'
+            padding: '3px 10px', borderRadius: '999px', fontSize: isMobile ? '0.65rem' : '0.75rem',
+            fontWeight: 'bold', marginBottom: '8px', display: 'inline-block'
           }}>DESTAQUE DA SEMANA</span>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', margin: '8px 0 4px' }}>
+          <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.5rem', fontWeight: 'bold', color: 'white', margin: '6px 0 4px' }}>
             {FEATURED.song}
           </h2>
-          <p style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '8px' }}>{FEATURED.artist}</p>
-          <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '20px' }}>{FEATURED.description}</p>
+          <p style={{ color: '#FFD700', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '6px' }}>{FEATURED.artist}</p>
+          {!isMobile && <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '20px' }}>{FEATURED.description}</p>}
           <button style={{
-            padding: '12px 28px', borderRadius: '12px',
+            padding: isMobile ? '8px 20px' : '12px 28px', borderRadius: '10px',
             background: 'linear-gradient(135deg,#FFD700,#b8860b)',
-            color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '1rem'
+            color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer',
+            fontSize: isMobile ? '0.85rem' : '1rem', marginTop: isMobile ? '8px' : '0'
           }}>Ver letra</button>
         </div>
       </div>
@@ -150,15 +147,15 @@ function FeaturedBanner({ router }: { router: any }) {
   );
 }
 
-function AdBanner() {
+function AdBanner({ isMobile }: { isMobile: boolean }) {
   return (
     <div style={{
-      width: '100%', height: '90px', background: '#111',
+      width: '100%', height: isMobile ? '60px' : '90px', background: '#111',
       border: '1px dashed #333', borderRadius: '8px',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      margin: '16px 0 40px',
+      margin: '12px 0 32px',
     }}>
-      <p style={{ color: '#444', fontSize: '0.75rem', letterSpacing: '0.1em' }}>PUBLICIDADE</p>
+      <p style={{ color: '#444', fontSize: '0.7rem', letterSpacing: '0.1em' }}>PUBLICIDADE</p>
     </div>
   );
 }
@@ -167,10 +164,17 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [suggestions, setSuggestions] = useState<{ artist: string, song: string, genre: string }[]>([]);
   const [activeGenre, setActiveGenre] = useState('Todos');
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
 
-  const allSongs = [...BR_HITS, ...GLOBAL_HITS, ...GOSPEL_HITS, ...ROCK_HITS];
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
+  const allSongs = [...BR_HITS, ...GLOBAL_HITS, ...GOSPEL_HITS, ...ROCK_HITS];
   const filteredBR = activeGenre === 'Todos' ? BR_HITS : BR_HITS.filter(s => s.genre === activeGenre);
   const filteredGlobal = activeGenre === 'Todos' ? GLOBAL_HITS : GLOBAL_HITS.filter(s => s.genre === activeGenre);
   const filteredGospel = activeGenre === 'Todos' || activeGenre === 'Gospel' ? GOSPEL_HITS : [];
@@ -202,40 +206,43 @@ export default function Home() {
     router.push('/letra/' + encodeURIComponent(artist) + '/' + encodeURIComponent(song));
   };
 
-  return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+  const gridCols = isMobile ? '1fr' : 'repeat(2, 1fr)';
 
-      <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
+  return (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '12px' : '20px' }}>
+
+      {/* Hero */}
+      <div style={{ textAlign: 'center', padding: isMobile ? '20px 0 16px' : '32px 0 24px' }}>
         <h1 style={{
-          fontSize: '3rem', fontWeight: 'bold',
+          fontSize: isMobile ? '2rem' : '3rem', fontWeight: 'bold',
           background: 'linear-gradient(135deg, #FFD700, #b8860b, #FFD700)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '10px'
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px'
         }}>Hits de Ouro</h1>
-        <p style={{ color: '#888', fontSize: '1.1rem', marginBottom: '24px' }}>
+        <p style={{ color: '#888', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '16px' }}>
           Encontre letras das suas musicas favoritas
         </p>
         <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
             <input
               type="text" value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Ex: Anitta Funk Rave ou Taylor Swift Cruel Summer"
+              placeholder={isMobile ? "Ex: Anitta Funk Rave" : "Ex: Anitta Funk Rave ou Taylor Swift Cruel Summer"}
               style={{
-                flex: 1, padding: '12px 16px', borderRadius: '12px',
+                flex: 1, padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: '12px',
                 background: '#1a1a1a', border: '1px solid #b8860b',
-                color: 'white', fontSize: '0.95rem', outline: 'none'
+                color: 'white', fontSize: '0.9rem', outline: 'none'
               }}
             />
             <button type="submit" style={{
-              padding: '12px 24px', borderRadius: '12px',
+              padding: isMobile ? '10px 16px' : '12px 24px', borderRadius: '12px',
               background: 'linear-gradient(135deg, #FFD700, #b8860b)',
               color: 'black', fontWeight: 'bold', border: 'none',
-              cursor: 'pointer', fontSize: '0.95rem'
+              cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap'
             }}>Buscar</button>
           </form>
           {suggestions.length > 0 && (
             <div style={{
-              position: 'absolute', top: '100%', left: 0, right: '90px',
+              position: 'absolute', top: '100%', left: 0, right: 0,
               background: '#1a1a1a', border: '1px solid #b8860b',
               borderRadius: '12px', marginTop: '4px', zIndex: 100, overflow: 'hidden'
             }}>
@@ -243,10 +250,7 @@ export default function Home() {
                 <div key={i} onClick={() => goToLyric(s.artist, s.song)} style={{
                   padding: '10px 16px', cursor: 'pointer', borderBottom: '1px solid #2a2a2a',
                   display: 'flex', gap: '8px', alignItems: 'center'
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
+                }}>
                   <span>♪</span>
                   <div>
                     <p style={{ color: 'white', fontSize: '0.9rem', margin: 0 }}>{s.song}</p>
@@ -257,89 +261,84 @@ export default function Home() {
             </div>
           )}
         </div>
-        <p style={{ color: '#666', fontSize: '0.8rem', marginTop: '10px' }}>
+        <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '8px' }}>
           Digite o nome do artista seguido da musica
         </p>
       </div>
 
-      {/* Filtros de Genero */}
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px', justifyContent: 'center' }}>
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px', justifyContent: 'center' }}>
         {GENRES.map(genre => (
-          <button
-            key={genre}
-            onClick={() => setActiveGenre(genre)}
-            style={{
-              padding: '8px 20px', borderRadius: '999px', border: 'none',
-              cursor: 'pointer', fontSize: '0.88rem', fontWeight: '600',
-              transition: 'all 0.2s',
-              background: activeGenre === genre ? 'linear-gradient(135deg, #FFD700, #b8860b)' : '#1a1a1a',
-              color: activeGenre === genre ? 'black' : '#aaa',
-              outline: activeGenre === genre ? 'none' : '1px solid #333',
-            }}
-          >
+          <button key={genre} onClick={() => setActiveGenre(genre)} style={{
+            padding: isMobile ? '6px 14px' : '8px 20px', borderRadius: '999px', border: 'none',
+            cursor: 'pointer', fontSize: isMobile ? '0.78rem' : '0.88rem', fontWeight: '600',
+            background: activeGenre === genre ? 'linear-gradient(135deg, #FFD700, #b8860b)' : '#1a1a1a',
+            color: activeGenre === genre ? 'black' : '#aaa',
+            outline: activeGenre === genre ? 'none' : '1px solid #333',
+          }}>
             {genre}
           </button>
         ))}
       </div>
 
-      <FeaturedBanner router={router} />
-      <AdBanner />
+      <FeaturedBanner router={router} isMobile={isMobile} />
+      <AdBanner isMobile={isMobile} />
 
       {filteredBR.length > 0 && (
-        <section style={{ marginBottom: '48px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <img src="https://flagcdn.com/w40/br.png" alt="Brasil" style={{ height: '28px', borderRadius: '4px' }} />
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Musicas Brasileiras em Alta</h2>
-            <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(0,100,0,0.3)', color: '#4ade80', padding: '4px 12px', borderRadius: '999px' }}>
+        <section style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <img src="https://flagcdn.com/w40/br.png" alt="Brasil" style={{ height: '24px', borderRadius: '4px' }} />
+            <h2 style={{ fontSize: isMobile ? '1.1rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Musicas Brasileiras</h2>
+            <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(0,100,0,0.3)', color: '#4ade80', padding: '3px 10px', borderRadius: '999px' }}>
               {new Date().toLocaleString('pt-BR', { month: 'long' })}
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '10px' }}>
             {filteredBR.map((item, i) => (
-              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} isMobile={isMobile} />
             ))}
           </div>
         </section>
       )}
 
       {filteredGlobal.length > 0 && (
-        <section style={{ marginBottom: '48px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <span style={{ fontSize: '1.8rem' }}>*</span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Classicos Globais</h2>
-            <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(0,0,100,0.3)', color: '#60a5fa', padding: '4px 12px', borderRadius: '999px' }}>
+        <section style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '1.5rem' }}>*</span>
+            <h2 style={{ fontSize: isMobile ? '1.1rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Classicos Globais</h2>
+            <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(0,0,100,0.3)', color: '#60a5fa', padding: '3px 10px', borderRadius: '999px' }}>
               {new Date().toLocaleString('pt-BR', { month: 'long' })}
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '10px' }}>
             {filteredGlobal.map((item, i) => (
-              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} isMobile={isMobile} />
             ))}
           </div>
         </section>
       )}
 
       {filteredGospel.length > 0 && (
-        <section style={{ marginBottom: '48px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Gospel</h2>
+        <section style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: isMobile ? '1.1rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Gospel</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '10px' }}>
             {filteredGospel.map((item, i) => (
-              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} isMobile={isMobile} />
             ))}
           </div>
         </section>
       )}
 
       {filteredRock.length > 0 && (
-        <section style={{ marginBottom: '48px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Rock</h2>
+        <section style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: isMobile ? '1.1rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>Top Rock</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '10px' }}>
             {filteredRock.map((item, i) => (
-              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} />
+              <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} isMobile={isMobile} />
             ))}
           </div>
         </section>
