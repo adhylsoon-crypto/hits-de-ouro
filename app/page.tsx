@@ -413,6 +413,7 @@ export default function Home() {
       <AdBanner isMobile={isMobile} />
 
       <Section title="Top Musicas Brasileiras" items={lists.br} flag="https://flagcdn.com/w40/br.png" />
+<AdBanner isMobile={isMobile} />
       <Section title="Top Classicos Globais" items={lists.global} />
       <Section title="Top Gospel" items={lists.gospel} />
       <Section title="Top Rock" items={lists.rock} />
