@@ -1,93 +1,113 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabase';
 
-export default function Login() {
+export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(isLogin ? 'Login em breve disponivel!' : 'Cadastro em breve disponivel!');
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError('Email ou senha incorretos.');
+      } else {
+        router.push('/');
+      }
+    } else {
+      if (!name.trim()) { setError('Digite seu nome.'); setLoading(false); return; }
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError('Erro ao criar conta. Tente outro email.');
+      } else if (data.user) {
+        await supabase.from('profiles').insert({ id: data.user.id, email, name });
+        setSuccess('Conta criada! Verifique seu email para confirmar.');
+      }
+    }
+    setLoading(false);
   };
 
   return (
-    <div style={{ maxWidth: '420px', margin: '60px auto', padding: '20px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <img src="/logo.png" alt="Hits de Ouro" style={{ height: '60px', marginBottom: '16px' }} />
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          {isLogin ? 'Entrar na sua conta' : 'Criar conta grátis'}
-        </h1>
-      </div>
+    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ width: '100%', maxWidth: '420px', background: '#111', borderRadius: '20px', padding: '40px', border: '1px solid #b8860b33' }}>
+        
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <img src="/logo.png" alt="Hits de Ouro" style={{ height: '56px', marginBottom: '16px' }} />
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {isLogin ? 'Entrar na sua conta' : 'Criar conta gratis'}
+          </h1>
+          <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '6px' }}>
+            {isLogin ? 'Acesse suas musicas favoritas' : 'Salve suas musicas favoritas'}
+          </p>
+        </div>
 
-      <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '32px', border: '1px solid #b8860b' }}>
-
-        <div style={{ display: 'flex', marginBottom: '24px', background: '#0a0a0a', borderRadius: '10px', padding: '4px' }}>
-          <button onClick={() => setIsLogin(true)} style={{
-            flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+        {/* Tabs */}
+        <div style={{ display: 'flex', background: '#1a1a1a', borderRadius: '12px', padding: '4px', marginBottom: '24px' }}>
+          <button onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }} style={{
+            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600',
             background: isLogin ? 'linear-gradient(135deg,#FFD700,#b8860b)' : 'transparent',
-            color: isLogin ? 'black' : '#888', fontWeight: 'bold', fontSize: '0.9rem'
+            color: isLogin ? 'black' : '#888',
           }}>Entrar</button>
-          <button onClick={() => setIsLogin(false)} style={{
-            flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          <button onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }} style={{
+            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600',
             background: !isLogin ? 'linear-gradient(135deg,#FFD700,#b8860b)' : 'transparent',
-            color: !isLogin ? 'black' : '#888', fontWeight: 'bold', fontSize: '0.9rem'
+            color: !isLogin ? 'black' : '#888',
           }}>Cadastrar</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Campos */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {!isLogin && (
-            <div>
-              <label style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', marginBottom: '6px' }}>Nome</label>
-              <input
-                type="text" value={name} onChange={e => setName(e.target.value)}
-                placeholder="Seu nome"
-                style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid #b8860b', color: 'white', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
-              />
-            </div>
+            <input
+              type="text" placeholder="Seu nome" value={name}
+              onChange={e => setName(e.target.value)}
+              style={{ padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: 'white', fontSize: '0.95rem', outline: 'none' }}
+            />
           )}
-          <div>
-            <label style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', marginBottom: '6px' }}>E-mail</label>
-            <input
-              type="email" value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid #b8860b', color: 'white', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', marginBottom: '6px' }}>Senha</label>
-            <input
-              type="password" value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid #b8860b', color: 'white', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
+          <input
+            type="email" placeholder="Seu email" value={email}
+            onChange={e => setEmail(e.target.value)}
+            style={{ padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: 'white', fontSize: '0.95rem', outline: 'none' }}
+          />
+          <input
+            type="password" placeholder="Sua senha" value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            style={{ padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: 'white', fontSize: '0.95rem', outline: 'none' }}
+          />
+        </div>
 
-          <button type="submit" style={{
-            padding: '14px', borderRadius: '10px',
-            background: 'linear-gradient(135deg,#FFD700,#b8860b)',
-            color: 'black', fontWeight: 'bold', border: 'none',
-            cursor: 'pointer', fontSize: '1rem', marginTop: '8px'
-          }}>
-            {isLogin ? '👤 Entrar' : '🎵 Criar conta'}
-          </button>
-        </form>
+        {/* Erro / Sucesso */}
+        {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '12px', textAlign: 'center' }}>{error}</p>}
+        {success && <p style={{ color: '#4ade80', fontSize: '0.85rem', marginTop: '12px', textAlign: 'center' }}>{success}</p>}
 
-        {isLogin && (
-          <p style={{ textAlign: 'center', color: '#666', fontSize: '0.85rem', marginTop: '16px' }}>
-            Nao tem conta?{' '}
-            <span onClick={() => setIsLogin(false)} style={{ color: '#b8860b', cursor: 'pointer' }}>
-              Cadastre-se gratis
-            </span>
-          </p>
-        )}
+        {/* Botão */}
+        <button onClick={handleSubmit} disabled={loading} style={{
+          width: '100%', padding: '14px', borderRadius: '12px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+          background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold',
+          fontSize: '1rem', marginTop: '20px', opacity: loading ? 0.7 : 1,
+        }}>
+          {loading ? 'Aguarde...' : isLogin ? 'Entrar' : 'Criar conta'}
+        </button>
+
+        {/* Voltar */}
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <a href="/" style={{ color: '#666', fontSize: '0.85rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
+        </div>
+
       </div>
-
-      <p style={{ textAlign: 'center', color: '#555', fontSize: '0.8rem', marginTop: '20px' }}>
-        Ao continuar voce concorda com nossos{' '}
-        <a href="/termos" style={{ color: '#b8860b' }}>Termos de Uso</a>
-      </p>
     </div>
   );
 }
