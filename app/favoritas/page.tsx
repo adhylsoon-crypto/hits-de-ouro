@@ -45,7 +45,6 @@ export default function FavoritasPage() {
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 20px' }}>
 
-      {/* Título */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           ⭐ Minhas Favoritas
@@ -53,7 +52,6 @@ export default function FavoritasPage() {
         <p style={{ color: '#666', marginTop: '8px' }}>Suas músicas salvas em um só lugar</p>
       </div>
 
-      {/* Loading */}
       {loading && (
         <div style={{ textAlign: 'center', paddingTop: '80px' }}>
           <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p>
@@ -61,7 +59,6 @@ export default function FavoritasPage() {
         </div>
       )}
 
-      {/* Lista vazia */}
       {!loading && favoritos.length === 0 && (
         <div style={{ textAlign: 'center', paddingTop: '80px' }}>
           <p style={{ fontSize: '3rem', marginBottom: '16px' }}>☆</p>
@@ -72,7 +69,6 @@ export default function FavoritasPage() {
         </div>
       )}
 
-      {/* Lista de favoritos */}
       {!loading && favoritos.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {favoritos.map(fav => (
@@ -90,7 +86,7 @@ export default function FavoritasPage() {
               </div>
               <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                 
-                  href={`/letra/${encodeURIComponent(fav.artist)}/${encodeURIComponent(fav.song)}`}
+                  href={'/letra/' + encodeURIComponent(fav.artist) + '/' + encodeURIComponent(fav.song)}
                   style={{ padding: '8px 16px', borderRadius: '8px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.85rem' }}>
                   Ver letra
                 </a>
