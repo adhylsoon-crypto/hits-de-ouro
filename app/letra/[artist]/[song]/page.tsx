@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { supabase } from '../../../../lib/supabase';
 
 export default function LetraPage() {
   const params = useParams();
@@ -18,6 +19,9 @@ export default function LetraPage() {
   const [isPt, setIsPt] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [favLoading, setFavLoading] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -27,12 +31,46 @@ export default function LetraPage() {
   }, []);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('favoritos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('artist', artist)
+      .eq('song', song)
+      .maybeSingle()
+      .then(({ data }) => setIsFavorited(!!data));
+  }, [user, artist, song]);
+
+  const toggleFavorito = async () => {
+    if (!user) { window.location.href = '/login'; return; }
+    setFavLoading(true);
+    if (isFavorited) {
+      await supabase.from('favoritos').delete().eq('user_id', user.id).eq('artist', artist).eq('song', song);
+      setIsFavorited(false);
+    } else {
+      await supabase.from('favoritos').insert({ user_id: user.id, artist, song, album_img: albumImg });
+      setIsFavorited(true);
+    }
+    setFavLoading(false);
+  };
+
+  useEffect(() => {
     setLoading(true);
     setNotFound(false);
     setLyrics('');
     setTranslatedLines([]);
     setShowTranslation(false);
-
     fetch('/api/letra?artist=' + encodeURIComponent(artist) + '&song=' + encodeURIComponent(song))
       .then(r => r.json())
       .then(data => {
@@ -86,7 +124,25 @@ export default function LetraPage() {
           <p style={{ color: '#aaa', fontSize: '0.9rem', marginTop: '2px' }}>{artist}</p>
           <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
         </div>
-        <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', whiteSpace: 'nowrap' }}>▶ Ver clipe</a>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={toggleFavorito}
+            disabled={favLoading}
+            style={{
+              padding: isMobile ? '8px 14px' : '10px 20px',
+              borderRadius: '10px',
+              background: isFavorited ? 'linear-gradient(135deg,#FFD700,#b8860b)' : '#1a1a1a',
+              border: '1px solid #b8860b',
+              color: isFavorited ? 'black' : '#FFD700',
+              fontWeight: 'bold',
+              fontSize: isMobile ? '0.8rem' : '0.9rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}>
+            {isFavorited ? '★ Favoritado' : '☆ Favoritar'}
+          </button>
+          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', whiteSpace: 'nowrap' }}>▶ Ver clipe</a>
+        </div>
       </div>
 
       {/* Banner publicidade mobile */}
@@ -150,7 +206,7 @@ export default function LetraPage() {
           )}
         </div>
 
-        {/* Sidebar — só aparece no desktop */}
+        {/* Sidebar desktop */}
         {!isMobile && (
           <div style={{ width: '300px', flexShrink: 0 }}>
             <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -173,7 +229,7 @@ export default function LetraPage() {
         )}
       </div>
 
-      {/* Clipe e publicidade no final no mobile */}
+      {/* Mobile final */}
       {isMobile && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>▶ Ver clipe no YouTube</a>
@@ -182,7 +238,6 @@ export default function LetraPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
