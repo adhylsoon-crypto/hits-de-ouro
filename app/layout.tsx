@@ -100,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: '24px', display: 'flex', justifyContent: 'center' }}>
-              <p style={{ color: '#444', fontSize: '0.8rem' }}>© 2025 Hits de Ouro. Todos os direitos reservados.</p>
+              <p style={{ color: '#444', fontSize: '0.8rem' }}>© {new Date().getFullYear()} Hits de Ouro. Todos os direitos reservados.</p>
             </div>
           </div>
         </footer>
