@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 function normalize(str: string) {
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').trim();
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const xml = await r.text();
     const match = xml.match(/<Lyric>([\s\S]*?)<\/Lyric>/);
-    if (match?.[1]?.trim().length > 50) return NextResponse.json({ lyrics: match[1].trim() });
+    if (match?.[1] && match[1].trim().length > 50) return NextResponse.json({ lyrics: match[1].trim() });
   } catch {}
 
   // 9. ChartLyrics normalizado
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const xml = await r.text();
     const match = xml.match(/<Lyric>([\s\S]*?)<\/Lyric>/);
-    if (match?.[1]?.trim().length > 50) return NextResponse.json({ lyrics: match[1].trim() });
+    if (match?.[1] && match[1].trim().length > 50) return NextResponse.json({ lyrics: match[1].trim() });
   } catch {}
 
   // 10. Genius scrape via genius.com
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     }
   } catch {}
 
-  // 11. Genius com artista simplificado variação
+  // 11. Genius com artista simplificado variaÃ§Ã£o
   try {
     const artistVar = artistSimple.replace(/\s+e\s+/g, '-').replace(/\s+/g, '-');
     const songVar = songSimple.replace(/\s+/g, '-');
