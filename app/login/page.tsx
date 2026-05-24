@@ -21,18 +21,31 @@ export default function LoginPage() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
+        console.error('Erro login:', error.message);
         setError('Email ou senha incorretos.');
       } else {
         router.push('/');
       }
     } else {
       if (!name.trim()) { setError('Digite seu nome.'); setLoading(false); return; }
+      if (password.length < 6) { setError('Senha deve ter pelo menos 6 caracteres.'); setLoading(false); return; }
+
       const { data, error } = await supabase.auth.signUp({ email, password });
+
       if (error) {
-        setError('Erro ao criar conta. Tente outro email.');
+        console.error('Erro cadastro:', error.message);
+        setError(`Erro: ${error.message}`);
       } else if (data.user) {
-        await supabase.from('profiles').insert({ id: data.user.id, email, name });
-        setSuccess('Conta criada! Verifique seu email para confirmar.');
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({ id: data.user.id, email, name });
+
+        if (profileError) {
+          console.error('Erro ao salvar profile:', profileError.message);
+        }
+
+        setSuccess('✅ Conta criada com sucesso! Verifique seu email para confirmar.');
+        setTimeout(() => router.push('/'), 3000);
       }
     }
     setLoading(false);
@@ -91,7 +104,7 @@ export default function LoginPage() {
 
         {/* Erro / Sucesso */}
         {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '12px', textAlign: 'center' }}>{error}</p>}
-        {success && <p style={{ color: '#4ade80', fontSize: '0.85rem', marginTop: '12px', textAlign: 'center' }}>{success}</p>}
+        {success && <p style={{ color: '#4ade80', fontSize: '0.9rem', marginTop: '12px', textAlign: 'center', fontWeight: '600' }}>{success}</p>}
 
         {/* Botão */}
         <button onClick={handleSubmit} disabled={loading} style={{
