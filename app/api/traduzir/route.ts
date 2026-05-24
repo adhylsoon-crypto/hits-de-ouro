@@ -5,27 +5,20 @@ export async function GET(request: NextRequest) {
   const text = searchParams.get('text') || '';
   const to = searchParams.get('lang') || 'pt';
   const from = searchParams.get('from') || 'en';
+
   if (!text) return NextResponse.json({ translated: '' });
   if (from === to || (from === 'pt' && to === 'pt')) return NextResponse.json({ translated: '' });
 
   try {
-    const lines = text.split('\n');
-    const translatedLines: string[] = [];
+    // Traduz o texto inteiro de uma vez — muito mais rápido
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const d = await r.json();
 
-    for (const line of lines) {
-      if (!line.trim()) { translatedLines.push(''); continue; }
-      try {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(line)}`;
-        const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
-        const d = await r.json();
-        const translated = d?.[0]?.map((x: any) => x?.[0]).filter(Boolean).join('') || '';
-        translatedLines.push(translated);
-      } catch {
-        translatedLines.push('');
-      }
-    }
+    // Junta todos os fragmentos traduzidos
+    const translated = d?.[0]?.map((x: any) => x?.[0]).filter(Boolean).join('') || '';
 
-    return NextResponse.json({ translated: translatedLines.join('\n') });
+    return NextResponse.json({ translated });
   } catch {
     return NextResponse.json({ translated: '' });
   }
