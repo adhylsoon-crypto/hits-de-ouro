@@ -3,8 +3,34 @@ import "./globals.css";
 import HeaderClient from "./HeaderClient";
 
 export const metadata: Metadata = {
-  title: "Hits de Ouro - Letras de Musicas",
-  description: "Encontre letras das suas musicas favoritas no Hits de Ouro.",
+  title: {
+    default: 'Hits de Ouro - Letras de Musicas',
+    template: '%s | Hits de Ouro',
+  },
+  description: 'Encontre letras das suas musicas favoritas. Gospel, Sertanejo, Funk, Pop, Rock e muito mais no Hits de Ouro.',
+  keywords: ['letras de musicas', 'hits de ouro', 'letras', 'musicas brasileiras', 'gospel', 'sertanejo', 'funk'],
+  authors: [{ name: 'Hits de Ouro' }],
+  creator: 'Hits de Ouro',
+  metadataBase: new URL('https://www.hitsdeouroletras.com.br'),
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://www.hitsdeouroletras.com.br',
+    siteName: 'Hits de Ouro',
+    title: 'Hits de Ouro - Letras de Musicas',
+    description: 'Encontre letras das suas musicas favoritas. Gospel, Sertanejo, Funk, Pop, Rock e muito mais.',
+    images: [{ url: '/logo.png', width: 500, height: 500, alt: 'Hits de Ouro' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Hits de Ouro - Letras de Musicas',
+    description: 'Encontre letras das suas musicas favoritas.',
+    images: ['/logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
