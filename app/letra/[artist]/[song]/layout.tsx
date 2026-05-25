@@ -1,12 +1,13 @@
 import { Metadata } from 'next';
 
 type Props = {
-  params: { artist: string; song: string };
+  params: Promise<{ artist: string; song: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const artist = decodeURIComponent(params.artist);
-  const song = decodeURIComponent(params.song);
+  const { artist: rawArtist, song: rawSong } = await params;
+  const artist = decodeURIComponent(rawArtist);
+  const song = decodeURIComponent(rawSong);
 
   return {
     title: `${song} - ${artist} | Hits de Ouro`,
