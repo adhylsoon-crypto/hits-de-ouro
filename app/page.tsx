@@ -82,11 +82,33 @@ export default function Home() {
       }).catch(() => {});
   }, [featured]);
 
-  const handleSearchChange = (value: string) => {
+  const handleSearchChange = async (value: string) => {
     setSearch(value);
     if (value.length < 2) { setSuggestions([]); return; }
     const lower = value.toLowerCase();
-    setSuggestions(allSongs.filter(s => s.artist.toLowerCase().includes(lower) || s.song.toLowerCase().includes(lower)).slice(0, 5));
+
+    // Sugestões locais (músicas em destaque)
+    const localSuggestions = allSongs
+      .filter(s => s.artist.toLowerCase().includes(lower) || s.song.toLowerCase().includes(lower))
+      .slice(0, 3);
+
+    // Sugestões do Supabase (letras cadastradas)
+    try {
+      const { data } = await supabase
+        .from('letras')
+        .select('artist, song')
+        .or(`artist.ilike.%${value}%,song.ilike.%${value}%`)
+        .limit(5);
+
+      const supabaseSuggestions = (data || [])
+        .filter(d => !localSuggestions.some(l => l.artist === d.artist && l.song === d.song))
+        .map(d => ({ artist: d.artist, song: d.song, genre: '', views: '' }))
+        .slice(0, 3);
+
+      setSuggestions([...localSuggestions, ...supabaseSuggestions].slice(0, 6));
+    } catch {
+      setSuggestions(localSuggestions);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
