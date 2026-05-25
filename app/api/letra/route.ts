@@ -20,13 +20,14 @@ export async function GET(request: NextRequest) {
   const songS = normalize(song.split('(')[0].split('-')[0].trim());
   const token = process.env.GENIUS_ACCESS_TOKEN || '';
 
-  // 1. Busca no Supabase primeiro (letras cadastradas manualmente)
+// 1. Busca no Supabase (letras cadastradas manualmente)
   try {
     const { data } = await supabase
       .from('letras')
       .select('lyrics')
-      .ilike('artist', '%' + artistS + '%')
-      .ilike('song', '%' + songS + '%')
+      .or(`artist.ilike.%${artistS}%,artist.ilike.%${artistN}%`)
+      .or(`song.ilike.%${songS}%,song.ilike.%${songN}%`)
+      .limit(1)
       .single();
     if (data?.lyrics && data.lyrics.trim().length > 50) {
       return NextResponse.json({ lyrics: data.lyrics.trim() });
