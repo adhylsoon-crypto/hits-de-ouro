@@ -20,12 +20,18 @@ export default function LetraPage() {
   const [showTranslation, setShowTranslation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-const [letraEnviada, setLetraEnviada] = useState('');
-const [formLoading, setFormLoading] = useState(false);
-const [formMsg, setFormMsg] = useState('');
   const [user, setUser] = useState<any>(null);
   const [favLoading, setFavLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [letraEnviada, setLetraEnviada] = useState('');
+  const [compositor, setCompositor] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
+  const [formMsg, setFormMsg] = useState('');
+  const [enviador, setEnviador] = useState('');
+  const [compositorLetra, setCompositorLetra] = useState('');
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [novoComentario, setNovoComentario] = useState('');
+  const [comentarioLoading, setComentarioLoading] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -46,15 +52,18 @@ const [formMsg, setFormMsg] = useState('');
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from('favoritos')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('artist', artist)
-      .eq('song', song)
-      .maybeSingle()
+    supabase.from('favoritos').select('id').eq('user_id', user.id).eq('artist', artist).eq('song', song).maybeSingle()
       .then(({ data }) => setIsFavorited(!!data));
   }, [user, artist, song]);
+
+  useEffect(() => {
+    carregarComentarios();
+  }, [artist, song]);
+
+  const carregarComentarios = async () => {
+    const { data } = await supabase.from('comentarios').select('*').eq('artist', artist).eq('song', song).order('created_at', { ascending: false });
+    setComentarios(data || []);
+  };
 
   const toggleFavorito = async () => {
     if (!user) { window.location.href = '/login'; return; }
@@ -69,70 +78,70 @@ const [formMsg, setFormMsg] = useState('');
     setFavLoading(false);
   };
 
+  const enviarLetra = async () => {
+    if (!letraEnviada.trim() || letraEnviada.trim().length < 50) { setFormMsg('A letra precisa ter pelo menos 50 caracteres.'); return; }
+    setFormLoading(true);
+    setFormMsg('');
+    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+    const { error } = await supabase.from('letras_pendentes').insert({
+      artist, song,
+      lyrics: letraEnviada.trim(),
+      compositor: compositor.trim(),
+      enviado_por: user.id,
+      email_enviado: user.email,
+    });
+    if (error) { setFormMsg('Erro ao enviar. Tente novamente.'); }
+    else { setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.'); setLetraEnviada(''); setCompositor(''); }
+    setFormLoading(false);
+  };
+
+  const enviarComentario = async () => {
+    if (!novoComentario.trim()) return;
+    if (!user) { window.location.href = '/login'; return; }
+    setComentarioLoading(true);
+    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+    const nome = profile?.name || user.email?.split('@')[0] || 'Usuário';
+    await supabase.from('comentarios').insert({ artist, song, user_id: user.id, user_nome: nome, comentario: novoComentario.trim() });
+    setNovoComentario('');
+    carregarComentarios();
+    setComentarioLoading(false);
+  };
+
+  const deletarComentario = async (id: string) => {
+    await supabase.from('comentarios').delete().eq('id', id);
+    setComentarios(prev => prev.filter(c => c.id !== id));
+  };
+
   useEffect(() => {
-    setLoading(true);
-    setNotFound(false);
-    setLyrics('');
-    setTranslatedLines([]);
-    setShowTranslation(false);
+    setLoading(true); setNotFound(false); setLyrics(''); setTranslatedLines([]); setShowTranslation(false);
     fetch('/api/letra?artist=' + encodeURIComponent(artist) + '&song=' + encodeURIComponent(song))
       .then(r => r.json())
       .then(data => {
         if (data?.lyrics) {
           setLyrics(data.lyrics);
           setLyricsLines(data.lyrics.split('\n'));
+          setEnviador(data.enviado_por_nome || '');
+          setCompositorLetra(data.compositor || '');
           const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele', 'meu', 'minha'];
           const lower = data.lyrics.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           const ptCount = ptWords.filter(w => lower.includes(' ' + w + ' ')).length;
           const isBr = ptCount >= 3;
           setIsPt(isBr);
           if (!isBr) {
-            setTranslating(true);
-            setShowTranslation(true);
+            setTranslating(true); setShowTranslation(true);
             fetch('/api/traduzir?text=' + encodeURIComponent(data.lyrics) + '&from=en&lang=pt')
-              .then(r => r.json())
-              .then(td => {
-                if (td?.translated) setTranslatedLines(td.translated.split('\n'));
-                setTranslating(false);
-              })
+              .then(r => r.json()).then(td => { if (td?.translated) setTranslatedLines(td.translated.split('\n')); setTranslating(false); })
               .catch(() => setTranslating(false));
           }
-        } else {
-          setNotFound(true);
-        }
+        } else { setNotFound(true); }
         setLoading(false);
-      })
-      .catch(() => { setNotFound(true); setLoading(false); });
+      }).catch(() => { setNotFound(true); setLoading(false); });
   }, [artist, song]);
 
-  const enviarLetra = async () => {
-    if (!letraEnviada.trim() || letraEnviada.trim().length < 50) {
-      setFormMsg('A letra precisa ter pelo menos 50 caracteres.');
-      return;
-    }
-    setFormLoading(true);
-    setFormMsg('');
-    const { error } = await supabase.from('letras_pendentes').insert({
-      artist,
-      song,
-      lyrics: letraEnviada.trim(),
-      enviado_por: user.id,
-      email_enviado: user.email,
-    });
-    if (error) {
-      setFormMsg('Erro ao enviar. Tente novamente.');
-    } else {
-      setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.');
-      setLetraEnviada('');
-    }
-    setFormLoading(false);
-  };useEffect(() => {
+  useEffect(() => {
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + song) + '&entity=song&limit=1')
-      .then(r => r.json())
-      .then(data => {
-        if (data.results?.[0]?.artworkUrl100) {
-          setAlbumImg(data.results[0].artworkUrl100.replace('100x100bb', '600x600bb'));
-        }
+      .then(r => r.json()).then(data => {
+        if (data.results?.[0]?.artworkUrl100) setAlbumImg(data.results[0].artworkUrl100.replace('100x100bb', '600x600bb'));
       }).catch(() => {});
   }, [artist, song]);
 
@@ -150,37 +159,20 @@ const [formMsg, setFormMsg] = useState('');
           <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            onClick={toggleFavorito}
-            disabled={favLoading}
-            style={{
-              padding: isMobile ? '8px 14px' : '10px 20px',
-              borderRadius: '10px',
-              background: isFavorited ? 'linear-gradient(135deg,#FFD700,#b8860b)' : '#1a1a1a',
-              border: '1px solid #b8860b',
-              color: isFavorited ? 'black' : '#FFD700',
-              fontWeight: 'bold',
-              fontSize: isMobile ? '0.8rem' : '0.9rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}>
+          <button onClick={toggleFavorito} disabled={favLoading} style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: isFavorited ? 'linear-gradient(135deg,#FFD700,#b8860b)' : '#1a1a1a', border: '1px solid #b8860b', color: isFavorited ? 'black' : '#FFD700', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             {isFavorited ? '★ Favoritado' : '☆ Favoritar'}
           </button>
           <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', whiteSpace: 'nowrap' }}>▶ Ver clipe</a>
         </div>
       </div>
 
-      {/* Banner publicidade mobile */}
       {isMobile && (
         <div style={{ width: '100%', height: '80px', background: '#111', border: '1px dashed #333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
           <p style={{ color: '#444', fontSize: '0.7rem' }}>PUBLICIDADE</p>
         </div>
       )}
 
-      {/* Layout principal */}
       <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row' }}>
-
-        {/* Coluna da letra */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => setFontSize(f => Math.max(12, f - 2))} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>A-</button>
@@ -195,57 +187,40 @@ const [formMsg, setFormMsg] = useState('');
             )}
           </div>
 
-          {loading && (
-            <div style={{ textAlign: 'center', paddingTop: '80px' }}>
-              <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p>
-              <p style={{ color: '#888' }}>Buscando letra...</p>
-            </div>
-          )}
+          {loading && <div style={{ textAlign: 'center', paddingTop: '80px' }}><p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p><p style={{ color: '#888' }}>Buscando letra...</p></div>}
 
           {notFound && !loading && (
-  <div style={{ textAlign: 'center', paddingTop: '60px' }}>
-    <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>:(</p>
-    <p style={{ color: '#888', marginBottom: '24px' }}>Letra nao encontrada.</p>
-    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-      <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ Buscar no YouTube</a>
-      <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Enviar letra</button>
-    </div>
-
-    {showForm && (
-      <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
-        <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>✏️ Enviar letra de {song}</h3>
-        {!user && (
-          <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '16px' }}>
-            Você precisa estar <a href="/login" style={{ color: '#FFD700' }}>logado</a> para enviar letras.
-          </p>
-        )}
-        {user && (
-          <>
-            <textarea
-              value={letraEnviada}
-              onChange={e => setLetraEnviada(e.target.value)}
-              placeholder={'Cole a letra de ' + song + ' aqui...'}
-              rows={12}
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
-            />
-            {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginTop: '8px' }}>{formMsg}</p>}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-              <button
-                onClick={enviarLetra}
-                disabled={formLoading}
-                style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
-                {formLoading ? 'Enviando...' : 'Enviar'}
-              </button>
-              <button onClick={() => { setShowForm(false); setLetraEnviada(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>
-                Cancelar
-              </button>
+            <div style={{ textAlign: 'center', paddingTop: '60px' }}>
+              <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>:(</p>
+              <p style={{ color: '#888', marginBottom: '24px' }}>Letra nao encontrada.</p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ Buscar no YouTube</a>
+                <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Enviar letra</button>
+              </div>
+              {showForm && (
+                <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
+                  <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>✏️ Enviar letra de {song}</h3>
+                  {!user ? (
+                    <p style={{ color: '#f87171', fontSize: '0.85rem' }}>Você precisa estar <a href="/login" style={{ color: '#FFD700' }}>logado</a> para enviar letras.</p>
+                  ) : (
+                    <>
+                      <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)} placeholder={'Cole a letra de ' + song + ' aqui...'} rows={10}
+                        style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder="Compositores (opcional): ex: João Silva, Maria Santos"
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
+                          {formLoading ? 'Enviando...' : 'Enviar'}
+                        </button>
+                        <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>Cancelar</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          </>
-        )}
-      </div>
-    )}
-  </div>
-)}
+          )}
 
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
@@ -256,12 +231,59 @@ const [formMsg, setFormMsg] = useState('');
                     <>
                       <p style={{ margin: 0, fontSize: fontSize + 'px', color: '#e5e5e5', lineHeight: '1.8' }}>{line}</p>
                       {showTranslation && translatedLines[i] && translatedLines[i].trim() !== '' && (
-                        <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.5', fontStyle: 'italic', marginBottom: '4px' }}>
-                          {translatedLines[i]}
-                        </p>
+                        <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.5', fontStyle: 'italic', marginBottom: '4px' }}>{translatedLines[i]}</p>
                       )}
                     </>
                   )}
+                </div>
+              ))}
+
+              {/* Créditos */}
+              <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #333' }}>
+                {compositorLetra && <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '4px' }}>🎵 Composição: {compositorLetra}</p>}
+                {enviador && <p style={{ color: '#666', fontSize: '0.8rem' }}>✏️ Enviado por: {enviador}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Comentários */}
+          {!loading && !notFound && (
+            <div style={{ marginTop: '32px' }}>
+              <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '16px' }}>💬 Comentários</h3>
+
+              {user ? (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'flex-start' }}>
+                  <textarea value={novoComentario} onChange={e => setNovoComentario(e.target.value)} placeholder="Escreva um comentário sobre essa música..." rows={3}
+                    style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'none', outline: 'none' }} />
+                  <button onClick={enviarComentario} disabled={comentarioLoading} style={{ padding: '10px 16px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    {comentarioLoading ? '...' : 'Comentar'}
+                  </button>
+                </div>
+              ) : (
+                <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '20px' }}>
+                  <a href="/login" style={{ color: '#FFD700' }}>Faça login</a> para comentar.
+                </p>
+              )}
+
+              {comentarios.length === 0 && <p style={{ color: '#555', fontSize: '0.85rem' }}>Nenhum comentário ainda. Seja o primeiro!</p>}
+
+              {comentarios.map(c => (
+                <div key={c.id} style={{ background: '#1a1a1a', borderRadius: '12px', padding: '14px 16px', border: '1px solid #222', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg,#FFD700,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'black', fontSize: '0.85rem' }}>
+                        {c.user_nome?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, color: 'white', fontWeight: 'bold', fontSize: '0.85rem' }}>{c.user_nome}</p>
+                        <p style={{ margin: 0, color: '#555', fontSize: '0.75rem' }}>{new Date(c.created_at).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    </div>
+                    {user && user.id === c.user_id && (
+                      <button onClick={() => deletarComentario(c.id)} style={{ background: 'transparent', border: 'none', color: '#555', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, color: '#ccc', fontSize: '0.9rem', lineHeight: '1.5' }}>{c.comentario}</p>
                 </div>
               ))}
             </div>
@@ -291,7 +313,6 @@ const [formMsg, setFormMsg] = useState('');
         )}
       </div>
 
-      {/* Mobile final */}
       {isMobile && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>▶ Ver clipe no YouTube</a>
