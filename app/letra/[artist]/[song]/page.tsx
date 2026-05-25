@@ -155,7 +155,11 @@ export default function LetraPage() {
         {albumImg && <img src={albumImg} alt={song} style={{ width: isMobile ? '60px' : '90px', height: isMobile ? '60px' : '90px', borderRadius: '12px', objectFit: 'cover', border: '2px solid #b8860b' }} />}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.8rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song}</h1>
-          <p style={{ color: '#aaa', fontSize: '0.9rem', marginTop: '2px' }}>{artist}</p>
+          <a href={'/artista/' + encodeURIComponent(artist)} style={{ color: '#aaa', fontSize: '0.9rem', marginTop: '2px', textDecoration: 'none', display: 'block' }}
+  onMouseEnter={e => (e.currentTarget.style.color = '#FFD700')}
+  onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
+  {artist}
+</a>
           <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
