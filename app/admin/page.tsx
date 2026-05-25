@@ -33,15 +33,18 @@ export default function AdminPage() {
   };
 
   const aprovar = async (item: any) => {
-    await supabase.from('letras').insert({
+    const { error } = await supabase.from('letras').upsert({
       artist: item.artist,
       song: item.song,
       lyrics: item.lyrics,
-    }).then(() => {
-      supabase.from('letras_pendentes').update({ status: 'aprovado' }).eq('id', item.id).then(() => {
-        setPendentes(prev => prev.filter(p => p.id !== item.id));
-      });
-    });
+      compositor: item.compositor || '',
+      enviado_por_nome: item.email_enviado?.split('@')[0] || '',
+    }, { onConflict: 'artist,song' });
+
+    if (!error) {
+      await supabase.from('letras_pendentes').update({ status: 'aprovado' }).eq('id', item.id);
+      setPendentes(prev => prev.filter(p => p.id !== item.id));
+    }
   };
 
   const rejeitar = async (id: string) => {
