@@ -20,6 +20,10 @@ export default function LetraPage() {
   const [showTranslation, setShowTranslation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+const [letraEnviada, setLetraEnviada] = useState('');
+const [formLoading, setFormLoading] = useState(false);
+const [formMsg, setFormMsg] = useState('');
   const [user, setUser] = useState<any>(null);
   const [favLoading, setFavLoading] = useState(false);
 
@@ -101,7 +105,28 @@ export default function LetraPage() {
       .catch(() => { setNotFound(true); setLoading(false); });
   }, [artist, song]);
 
-  useEffect(() => {
+  const enviarLetra = async () => {
+    if (!letraEnviada.trim() || letraEnviada.trim().length < 50) {
+      setFormMsg('A letra precisa ter pelo menos 50 caracteres.');
+      return;
+    }
+    setFormLoading(true);
+    setFormMsg('');
+    const { error } = await supabase.from('letras_pendentes').insert({
+      artist,
+      song,
+      lyrics: letraEnviada.trim(),
+      enviado_por: user.id,
+      email_enviado: user.email,
+    });
+    if (error) {
+      setFormMsg('Erro ao enviar. Tente novamente.');
+    } else {
+      setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.');
+      setLetraEnviada('');
+    }
+    setFormLoading(false);
+  };useEffect(() => {
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(artist + ' ' + song) + '&entity=song&limit=1')
       .then(r => r.json())
       .then(data => {
@@ -178,12 +203,49 @@ export default function LetraPage() {
           )}
 
           {notFound && !loading && (
-            <div style={{ textAlign: 'center', paddingTop: '60px' }}>
-              <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>:(</p>
-              <p style={{ color: '#888' }}>Letra nao encontrada.</p>
-              <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '16px', padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ Buscar no YouTube</a>
+  <div style={{ textAlign: 'center', paddingTop: '60px' }}>
+    <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>:(</p>
+    <p style={{ color: '#888', marginBottom: '24px' }}>Letra nao encontrada.</p>
+    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ Buscar no YouTube</a>
+      <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Enviar letra</button>
+    </div>
+
+    {showForm && (
+      <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
+        <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>✏️ Enviar letra de {song}</h3>
+        {!user && (
+          <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '16px' }}>
+            Você precisa estar <a href="/login" style={{ color: '#FFD700' }}>logado</a> para enviar letras.
+          </p>
+        )}
+        {user && (
+          <>
+            <textarea
+              value={letraEnviada}
+              onChange={e => setLetraEnviada(e.target.value)}
+              placeholder={'Cole a letra de ' + song + ' aqui...'}
+              rows={12}
+              style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+            />
+            {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginTop: '8px' }}>{formMsg}</p>}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+              <button
+                onClick={enviarLetra}
+                disabled={formLoading}
+                style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
+                {formLoading ? 'Enviando...' : 'Enviar'}
+              </button>
+              <button onClick={() => { setShowForm(false); setLetraEnviada(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>
+                Cancelar
+              </button>
             </div>
-          )}
+          </>
+        )}
+      </div>
+    )}
+  </div>
+)}
 
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
