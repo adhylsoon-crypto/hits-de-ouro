@@ -51,6 +51,7 @@ export default function Home() {
   const [lists, setLists] = useState<Record<string, any[]>>({});
   const [allSongs, setAllSongs] = useState<any[]>([]);
   const [featuredImg, setFeaturedImg] = useState('');
+  const [totalLetras, setTotalLetras] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -61,6 +62,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    supabase.from('letras').select('id', { count: 'exact', head: true }).then(({ count }) => {
+  setTotalLetras(count || 0);
+});
     supabase.from('destaques').select('*').eq('ativo', true).order('ordem').then(({ data }) => {
       if (!data) return;
       const feat = data.find(d => d.tipo === 'featured');
@@ -182,6 +186,11 @@ export default function Home() {
           )}
         </div>
         <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '8px' }}>Digite o nome do artista seguido da musica</p>
+{totalLetras > 0 && (
+  <p style={{ color: '#b8860b', fontSize: '0.8rem', marginTop: '6px' }}>
+    🎵 {totalLetras.toLocaleString('pt-BR')} letras disponíveis
+  </p>
+)}
       </div>
 
       {/* Filtros */}
