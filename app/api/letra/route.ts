@@ -22,15 +22,22 @@ export async function GET(request: NextRequest) {
 
 // 1. Busca no Supabase (letras cadastradas manualmente)
   try {
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from('letras')
-      .select('lyrics')
-      .or(`artist.ilike.%${artistS}%,artist.ilike.%${artistN}%`)
-      .or(`song.ilike.%${songS}%,song.ilike.%${songN}%`)
-      .limit(1)
-      .single();
-    if (data?.lyrics && data.lyrics.trim().length > 50) {
-      return NextResponse.json({ lyrics: data.lyrics.trim() });
+      .select('artist, song, lyrics');
+
+    if (rows && rows.length > 0) {
+      const found = rows.find((r: any) => {
+        const rArtist = normalize(r.artist);
+        const rSong = normalize(r.song);
+        return (
+          (rArtist.includes(artistS) || artistS.includes(rArtist) || rArtist.includes(artistN) || artistN.includes(rArtist)) &&
+          (rSong.includes(songS) || songS.includes(rSong) || rSong.includes(songN) || songN.includes(rSong))
+        );
+      });
+      if (found?.lyrics && found.lyrics.trim().length > 50) {
+        return NextResponse.json({ lyrics: found.lyrics.trim() });
+      }
     }
   } catch {}
 
