@@ -175,7 +175,7 @@ export default function LetraPage() {
         </div>
       </div>
 
-      {isMobile && (
+      {isMobile && !notFound && (
         <div style={{ width: '100%', height: '80px', background: '#111', border: '1px dashed #333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
           <p style={{ color: '#444', fontSize: '0.7rem' }}>PUBLICIDADE</p>
         </div>
@@ -300,7 +300,7 @@ export default function LetraPage() {
         </div>
 
         {/* Sidebar desktop */}
-        {!isMobile && (
+        {!isMobile && !notFound && (
           <div style={{ width: '300px', flexShrink: 0 }}>
             <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
@@ -322,7 +322,7 @@ export default function LetraPage() {
         )}
       </div>
 
-      {isMobile && (
+      {isMobile && !notFound && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>▶ Ver clipe no YouTube</a>
           <div style={{ width: '100%', height: '80px', background: '#111', border: '1px dashed #333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
