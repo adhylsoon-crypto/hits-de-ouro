@@ -91,7 +91,17 @@ export default function LetraPage() {
       email_enviado: user.email,
     });
     if (error) { setFormMsg('Erro ao enviar. Tente novamente.'); }
-    else { setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.'); setLetraEnviada(''); setCompositor(''); }
+    else {
+      setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.');
+      setLetraEnviada('');
+      setCompositor('');
+      // Envia notificação por email
+      fetch('/api/notificar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artist, song, enviado_por: user.email }),
+      }).catch(() => {});
+    }
     setFormLoading(false);
   };
 
