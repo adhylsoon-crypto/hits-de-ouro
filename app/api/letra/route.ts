@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data: rows } = await supabase
       .from('letras')
-      .select('artist, song, lyrics');
+      .select('artist, song, lyrics, compositor, enviado_por_nome');
 
     if (rows && rows.length > 0) {
       const found = rows.find((r: any) => {
@@ -36,11 +36,14 @@ export async function GET(request: NextRequest) {
         );
       });
       if (found?.lyrics && found.lyrics.trim().length > 50) {
-        return NextResponse.json({ lyrics: found.lyrics.trim() });
+        return NextResponse.json({
+          lyrics: found.lyrics.trim(),
+          compositor: found.compositor || '',
+          enviado_por_nome: found.enviado_por_nome || '',
+        });
       }
     }
   } catch {}
-
   // 2. Genius API
   if (token) {
     try {
