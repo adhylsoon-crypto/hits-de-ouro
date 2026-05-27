@@ -207,10 +207,21 @@ export default function Home() {
       {/* Banner destaque */}
       {featured && (
         <div onClick={() => goToLyric(featured.artist, featured.song)} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer', height: isMobile ? '200px' : '300px', background: '#1a1a1a', border: '1px solid #b8860b', marginBottom: '0' }}>
-          {featuredImg && <img src={featuredImg} alt={featured.song} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to right,rgba(0,0,0,0.95) 40%,transparent)', display: 'flex', alignItems: 'center', padding: isMobile ? '20px' : '40px' }}>
+          {/* Imagem do artista no lado direito */}
+{featuredImg && (
+  <div style={{ position: 'absolute', top: 0, right: 0, width: '45%', height: '100%' }}>
+    <img src={featuredImg} alt={featured.song} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(to right, var(--bg-card) 0%, transparent 40%)' }} />
+  </div>
+)}
+{!featuredImg && (
+  <div style={{ position: 'absolute', top: 0, right: 0, width: '45%', height: '100%', background: 'linear-gradient(135deg,#b8860b22,#FFD70022)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <span style={{ fontSize: '5rem', opacity: 0.3 }}>🎵</span>
+  </div>
+)}
+<div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to right,var(--bg-card) 50%, transparent 85%)', display: 'flex', alignItems: 'center', padding: isMobile ? '20px' : '40px' }}>
             <div>
-              <span style={{ background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', padding: '3px 10px', borderRadius: '999px', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: 'bold', marginBottom: '8px', display: 'inline-block' }}>{t('featuredWeek')}</span>
+              <span style={{ background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', padding: '3px 10px', borderRadius: '999px', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: 'bold', marginBottom: '8px', display: 'inline-block' }}>DESTAQUE DA SEMANA</span>
               <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.5rem', fontWeight: 'bold', color: 'white', margin: '6px 0 4px' }}>{featured.song}</h2>
               <p style={{ color: '#FFD700', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '6px' }}>{featured.artist}</p>
               {!isMobile && featured.description && <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '20px' }}>{featured.description}</p>}
