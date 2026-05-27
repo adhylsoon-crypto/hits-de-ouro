@@ -6,21 +6,35 @@ import { useTheme } from './ThemeProvider';
 import { useLocale } from './LocaleProvider';
 import { Locale } from './i18n';
 
+const flagSVG = {
+  pt: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#009c3b"/><polygon points="0,0 10,7 0,14" fill="#FFDF00"/><circle cx="10" cy="7" r="3.5" fill="#002776"/></svg>,
+  en: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#B22234"/><rect y="2" width="20" height="1.5" fill="white"/><rect y="5" width="20" height="1.5" fill="white"/><rect y="8" width="20" height="1.5" fill="white"/><rect y="11" width="20" height="1.5" fill="white"/><rect width="8" height="7.5" fill="#3C3B6E"/></svg>,
+  es: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg>,
+};
+
+const localeOptions = [
+  { value: 'pt' as Locale, flag: flagSVG.pt, label: 'Português' },
+  { value: 'en' as Locale, flag: flagSVG.en, label: 'English' },
+  { value: 'es' as Locale, flag: flagSVG.es, label: 'Español' },
+];
+
 export default function HeaderClient() {
   const [user, setUser] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [localeOpen, setLocaleOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
-
-const localeOptions = [
-  { value: 'pt', label: 'PT — Português' },
-  { value: 'en', label: 'EN — English' },
-  { value: 'es', label: 'ES — Español' },
-];
-const localeIcon = locale === 'pt' ? 'PT 🌐' : locale === 'en' ? 'EN 🌐' : 'ES 🌐';
-const [localeOpen, setLocaleOpen] = useState(false);
   const router = useRouter();
+
+  const localeIcon = flagSVG[locale];
+
+  const themeIcon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '⚙️';
+  const themeOptions = [
+    { value: 'auto', label: t('themeAuto') },
+    { value: 'dark', label: t('themeDark') },
+    { value: 'light', label: t('themeLight') },
+  ];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -38,13 +52,6 @@ const [localeOpen, setLocaleOpen] = useState(false);
     router.push('/');
   };
 
-  const themeIcon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '⚙️';
-  const themeOptions = [
-    { value: 'auto', label: '⚙️ Automático' },
-    { value: 'dark', label: '🌙 Escuro' },
-    { value: 'light', label: '☀️ Claro' },
-  ];
-
   return (
     <>
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--bg-secondary)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(184,134,11,0.3)' }}>
@@ -58,7 +65,7 @@ const [localeOpen, setLocaleOpen] = useState(false);
           {/* Nav Desktop */}
           <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <a href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>{t('home')}</a>
-<a href="/contato" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>{t('contact')}</a>
+            <a href="/contato" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>{t('contact')}</a>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
               <a href="https://www.tiktok.com/@hits_de_ouro" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #333' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16" height="16"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/></svg>
@@ -76,7 +83,7 @@ const [localeOpen, setLocaleOpen] = useState(false);
 
             {/* Seletor de tema */}
             <div style={{ position: 'relative' }}>
-              <button onClick={() => setThemeOpen(!themeOpen)} style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button onClick={() => { setThemeOpen(!themeOpen); setLocaleOpen(false); }} style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {themeIcon} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▾</span>
               </button>
               {themeOpen && (
@@ -91,66 +98,73 @@ const [localeOpen, setLocaleOpen] = useState(false);
               )}
             </div>
 
-            {/* Seletor de idioma */}
-<div style={{ position: 'relative' }}>
-  <button onClick={() => setLocaleOpen(!localeOpen)} style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-    {localeIcon} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▾</span>
-  </button>
-  {localeOpen && (
-    <div style={{ position: 'absolute', top: '110%', right: 0, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-      {localeOptions.map(opt => (
-        <button key={opt.value} onClick={() => { setLocale(opt.value as Locale); setLocaleOpen(false); }}
-          style={{ display: 'block', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )}
-</div>
+            {/* Seletor de idioma desktop */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => { setLocaleOpen(!localeOpen); setThemeOpen(false); }} style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {localeIcon} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▾</span>
+              </button>
+              {localeOpen && (
+                <div style={{ position: 'absolute', top: '110%', right: 0, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                  {localeOptions.map(opt => (
+                    <button key={opt.value} onClick={() => { setLocale(opt.value); setLocaleOpen(false); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
+                      {opt.flag}{opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <a href="/favoritas" style={{ padding: '8px 16px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: '#FFD700', fontWeight: 'bold', fontSize: '0.85rem', textDecoration: 'none' }}>⭐ Favoritas</a>
-                <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>Sair</button>
+                <a href="/favoritas" style={{ padding: '8px 16px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: '#FFD700', fontWeight: 'bold', fontSize: '0.85rem', textDecoration: 'none' }}>{t('favorites')}</a>
+                <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>{t('logout')}</button>
               </div>
             ) : (
-              <a href="/login" style={{ padding: '8px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', fontSize: '0.9rem', textDecoration: 'none' }}>Entrar</a>
+              <a href="/login" style={{ padding: '8px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', fontSize: '0.9rem', textDecoration: 'none' }}>{t('enter')}</a>
             )}
           </nav>
 
           {/* Mobile: botões direita */}
           <div className="mobile-right" style={{ display: 'none', alignItems: 'center', gap: '8px' }}>
-            <button onClick={() => setThemeOpen(!themeOpen)} style={{ padding: '7px 10px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem' }}>
-              {themeIcon}
-            </button>
-            {themeOpen && (
-              <div style={{ position: 'fixed', top: '60px', right: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '150px', zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-                {themeOptions.map(opt => (
-                  <button key={opt.value} onClick={() => { setTheme(opt.value as any); setThemeOpen(false); }}
-                    style={{ display: 'block', width: '100%', padding: '10px 16px', background: theme === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: theme === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: theme === opt.value ? 'bold' : 'normal' }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Seletor de idioma mobile */}
-<button onClick={() => setLocaleOpen(!localeOpen)} style={{ padding: '7px 10px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
-  {localeIcon}
-</button>
-{localeOpen && (
-  <div style={{ position: 'fixed', top: '60px', right: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-    {localeOptions.map(opt => (
-      <button key={opt.value} onClick={() => { setLocale(opt.value as Locale); setLocaleOpen(false); }}
-        style={{ display: 'block', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
-        {opt.label}
-      </button>
-    ))}
-  </div>
-)}
+            {/* Tema mobile */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => { setThemeOpen(!themeOpen); setLocaleOpen(false); }} style={{ padding: '7px 10px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem' }}>
+                {themeIcon}
+              </button>
+              {themeOpen && (
+                <div style={{ position: 'fixed', top: '60px', right: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '150px', zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                  {themeOptions.map(opt => (
+                    <button key={opt.value} onClick={() => { setTheme(opt.value as any); setThemeOpen(false); }}
+                      style={{ display: 'block', width: '100%', padding: '10px 16px', background: theme === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: theme === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: theme === opt.value ? 'bold' : 'normal' }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Idioma mobile */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => { setLocaleOpen(!localeOpen); setThemeOpen(false); }} style={{ padding: '7px 10px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                {localeIcon}
+              </button>
+              {localeOpen && (
+                <div style={{ position: 'fixed', top: '60px', right: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                  {localeOptions.map(opt => (
+                    <button key={opt.value} onClick={() => { setLocale(opt.value); setLocaleOpen(false); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
+                      {opt.flag}{opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {user ? (
               <a href="/favoritas" style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: '#FFD700', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'none' }}>⭐</a>
             ) : (
-              <a href="/login" style={{ padding: '7px 14px', borderRadius: '8px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'none' }}>Entrar</a>
+              <a href="/login" style={{ padding: '7px 14px', borderRadius: '8px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'none' }}>{t('enter')}</a>
             )}
             <button onClick={() => setMenuOpen(!menuOpen)} style={{ display: 'flex', flexDirection: 'column', gap: '5px', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>
               <span style={{ display: 'block', width: '22px', height: '2px', background: 'var(--text-primary)', transition: 'all 0.3s', transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }}></span>
@@ -180,9 +194,9 @@ const [localeOpen, setLocaleOpen] = useState(false);
         {menuOpen && (
           <div className="mobile-menu" style={{ display: 'none', flexDirection: 'column', padding: '12px 20px 16px', borderTop: '1px solid var(--border-color)', gap: '4px', background: 'var(--bg-secondary)' }}>
             <a href="/" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>{t('home')}</a>
-<a href="/contato" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>{t('contact')}</a>
+            <a href="/contato" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>{t('contact')}</a>
             {user && (
-              <button onClick={handleLogout} style={{ padding: '10px 0', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>Sair</button>
+              <button onClick={handleLogout} style={{ padding: '10px 0', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>{t('logout')}</button>
             )}
           </div>
         )}
