@@ -2,9 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../../lib/supabase';
+import { useLocale } from '../../../LocaleProvider';
 
 export default function LetraPage() {
   const params = useParams();
+  const { t } = useLocale();
   const artist = decodeURIComponent(params.artist as string);
   const song = decodeURIComponent(params.song as string);
   const [lyrics, setLyrics] = useState('');
@@ -165,13 +167,13 @@ export default function LetraPage() {
   onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
   {artist}
 </a>
-          <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>← Voltar ao inicio</a>
+          <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>{t('back')}</a>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button onClick={toggleFavorito} disabled={favLoading} style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: isFavorited ? 'linear-gradient(135deg,#FFD700,#b8860b)' : '#1a1a1a', border: '1px solid #b8860b', color: isFavorited ? 'black' : '#FFD700', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            {isFavorited ? '★ Favoritado' : '☆ Favoritar'}
+            {isFavorited ? t('favorited') : t('favorite')}
           </button>
-          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', whiteSpace: 'nowrap' }}>▶ Ver clipe</a>
+          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? '8px 14px' : '10px 20px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem', whiteSpace: 'nowrap' }}>▶ {t('viewClip')}</a>
         </div>
       </div>
 
@@ -187,42 +189,42 @@ export default function LetraPage() {
             <button onClick={() => setFontSize(f => Math.max(12, f - 2))} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>A-</button>
             <button onClick={() => setFontSize(f => Math.min(28, f + 2))} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>A+</button>
             <button onClick={() => { navigator.clipboard.writeText(lyrics); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ padding: '6px 12px', borderRadius: '8px', background: copied ? '#166534' : '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>
-              {copied ? 'Copiado!' : 'Copiar'}
+              {copied ? t('copied') : t('copyLyrics')}
             </button>
             {!isPt && translatedLines.length > 0 && (
               <button onClick={() => setShowTranslation(v => !v)} style={{ padding: '6px 12px', borderRadius: '8px', background: showTranslation ? '#1e3a5f' : '#1a1a1a', border: '1px solid #3b82f6', color: 'white', cursor: 'pointer', fontSize: '0.85rem', marginLeft: 'auto' }}>
-                {showTranslation ? 'Ocultar PT' : 'Ver PT'}
+                {showTranslation ? t('hidePT') : t('showPT')}
               </button>
             )}
           </div>
 
-          {loading && <div style={{ textAlign: 'center', paddingTop: '80px' }}><p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p><p style={{ color: '#888' }}>Buscando letra...</p></div>}
+          {loading && <div style={{ textAlign: 'center', paddingTop: '80px' }}><p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p><p style={{ color: '#888' }}>{t('loadingLyric')}</p></div>}
 
           {notFound && !loading && (
             <div style={{ textAlign: 'center', paddingTop: '60px' }}>
               <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>:(</p>
-              <p style={{ color: '#888', marginBottom: '24px' }}>Letra nao encontrada.</p>
+              <p style={{ color: '#888', marginBottom: '24px' }}>{t('lyricsNotFound')}</p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ Buscar no YouTube</a>
-                <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Enviar letra</button>
+                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ {t('searchYoutube')}</a>
+                <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{t('sendLyric')}</button>
               </div>
               {showForm && (
                 <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
-                  <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>✏️ Enviar letra de {song}</h3>
+                  <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>{t('sendLyricTitle')} {song}</h3>
                   {!user ? (
-                    <p style={{ color: '#f87171', fontSize: '0.85rem' }}>Você precisa estar <a href="/login" style={{ color: '#FFD700' }}>logado</a> para enviar letras.</p>
+                    <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{t('loginToSend')} <a href="/login" style={{ color: '#FFD700' }}>{t('loginToSend2')}</a> {t('loginToSend3')}</p>
                   ) : (
                     <>
-                      <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)} placeholder={'Cole a letra de ' + song + ' aqui...'} rows={10}
+                      <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)} placeholder={t('pasteLyric') + ' (' + song + ')'} rows={10}
                         style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-                      <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder="Compositores (opcional): ex: João Silva, Maria Santos"
+                      <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder={t('composerPlaceholder')}
                         style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
                       {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
-                          {formLoading ? 'Enviando...' : 'Enviar'}
+                          {formLoading ? t('sending') : t('send')}
                         </button>
-                        <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>Cancelar</button>
+                        <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>{t('cancel')}</button>
                       </div>
                     </>
                   )}
@@ -233,7 +235,7 @@ export default function LetraPage() {
 
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
-              {translating && <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>Carregando traducao...</p>}
+              {translating && <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{t('loadingTranslation')}</p>}
               {lyricsLines.map((line, i) => (
                 <div key={i} style={{ marginBottom: line === '' ? '16px' : '2px' }}>
                   {line !== '' && (
@@ -249,8 +251,8 @@ export default function LetraPage() {
 
               {/* Créditos */}
               <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #333' }}>
-                {compositorLetra && <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '4px' }}>🎵 Composição: {compositorLetra}</p>}
-                {enviador && <p style={{ color: '#666', fontSize: '0.8rem' }}>✏️ Enviado por: {enviador}</p>}
+                {compositorLetra && <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '4px' }}>{t('composition')} {compositorLetra}</p>}
+                {enviador && <p style={{ color: '#666', fontSize: '0.8rem' }}>{t('sentBy')} {enviador}</p>}
               </div>
             </div>
           )}
@@ -258,23 +260,23 @@ export default function LetraPage() {
           {/* Comentários */}
           {!loading && !notFound && (
             <div style={{ marginTop: '32px' }}>
-              <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '16px' }}>💬 Comentários</h3>
+              <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '16px' }}>{t('comments')}</h3>
 
               {user ? (
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'flex-start' }}>
-                  <textarea value={novoComentario} onChange={e => setNovoComentario(e.target.value)} placeholder="Escreva um comentário sobre essa música..." rows={3}
+                  <textarea value={novoComentario} onChange={e => setNovoComentario(e.target.value)} placeholder={t('writeComment')} rows={3}
                     style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'none', outline: 'none' }} />
                   <button onClick={enviarComentario} disabled={comentarioLoading} style={{ padding: '10px 16px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                    {comentarioLoading ? '...' : 'Comentar'}
+                    {comentarioLoading ? '...' : t('comment')}
                   </button>
                 </div>
               ) : (
                 <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '20px' }}>
-                  <a href="/login" style={{ color: '#FFD700' }}>Faça login</a> para comentar.
+                  <a href="/login" style={{ color: '#FFD700' }}>{t('enter')}</a> {t('loginToComment')}
                 </p>
               )}
 
-              {comentarios.length === 0 && <p style={{ color: '#555', fontSize: '0.85rem' }}>Nenhum comentário ainda. Seja o primeiro!</p>}
+              {comentarios.length === 0 && <p style={{ color: '#555', fontSize: '0.85rem' }}>{t('noComments')}</p>}
 
               {comentarios.map(c => (
                 <div key={c.id} style={{ background: '#1a1a1a', borderRadius: '12px', padding: '14px 16px', border: '1px solid #222', marginBottom: '10px' }}>
@@ -311,7 +313,7 @@ export default function LetraPage() {
                 {albumImg && <img src={albumImg} alt={song} style={{ width: '100%', borderRadius: '8px', marginBottom: '12px' }} />}
                 <p style={{ color: 'white', fontWeight: 'bold', fontSize: '0.9rem' }}>{song}</p>
                 <p style={{ color: '#888', fontSize: '0.8rem', marginTop: '4px', marginBottom: '12px' }}>{artist}</p>
-                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '10px', borderRadius: '8px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.85rem', textAlign: 'center' }}>▶ Ver clipe no YouTube</a>
+                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '10px', borderRadius: '8px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.85rem', textAlign: 'center' }}>▶ {t('viewClip')} YouTube</a>
               </div>
               <div style={{ width: '100%', height: '250px', background: '#1a1a1a', border: '1px dashed #333', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
                 <p style={{ color: '#444', fontSize: '0.75rem' }}>PUBLICIDADE</p>
@@ -324,7 +326,7 @@ export default function LetraPage() {
 
       {isMobile && !notFound && (
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>▶ Ver clipe no YouTube</a>
+          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>▶ {t('viewClip')} YouTube</a>
           <div style={{ width: '100%', height: '80px', background: '#111', border: '1px dashed #333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ color: '#444', fontSize: '0.7rem' }}>PUBLICIDADE</p>
           </div>
