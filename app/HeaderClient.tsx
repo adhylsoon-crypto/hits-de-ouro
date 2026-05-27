@@ -14,11 +14,11 @@ export default function HeaderClient() {
   const { locale, setLocale, t } = useLocale();
 
 const localeOptions = [
-  { value: 'pt', label: '🟢 Português' },
-  { value: 'en', label: '🔵 English' },
-  { value: 'es', label: '🔴 Español' },
+  { value: 'pt', label: 'PT — Português' },
+  { value: 'en', label: 'EN — English' },
+  { value: 'es', label: 'ES — Español' },
 ];
-const localeIcon = locale === 'pt' ? 'PT' : locale === 'en' ? 'EN' : 'ES';
+const localeIcon = locale === 'pt' ? 'PT 🌐' : locale === 'en' ? 'EN 🌐' : 'ES 🌐';
 const [localeOpen, setLocaleOpen] = useState(false);
   const router = useRouter();
 
@@ -133,6 +133,20 @@ const [localeOpen, setLocaleOpen] = useState(false);
                 ))}
               </div>
             )}
+            {/* Seletor de idioma mobile */}
+<button onClick={() => setLocaleOpen(!localeOpen)} style={{ padding: '7px 10px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>
+  {localeIcon}
+</button>
+{localeOpen && (
+  <div style={{ position: 'fixed', top: '60px', right: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+    {localeOptions.map(opt => (
+      <button key={opt.value} onClick={() => { setLocale(opt.value as Locale); setLocaleOpen(false); }}
+        style={{ display: 'block', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
+        {opt.label}
+      </button>
+    ))}
+  </div>
+)}
             {user ? (
               <a href="/favoritas" style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: '#FFD700', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'none' }}>⭐</a>
             ) : (
