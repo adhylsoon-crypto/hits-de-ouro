@@ -81,6 +81,12 @@ export default function Home() {
 
   useEffect(() => {
     if (!featured) return;
+    // Usa imagem customizada do Supabase se disponível
+    if (featured.album_img && featured.album_img.trim().length > 0) {
+      setFeaturedImg(featured.album_img);
+      return;
+    }
+    // Fallback para iTunes
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(featured.artist + ' ' + featured.song) + '&entity=song&limit=1')
       .then(r => r.json())
       .then(data => {
