@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import HeaderClient from "./HeaderClient";
 import { ThemeProvider } from "./ThemeProvider";
+import { LocaleProvider } from "./LocaleProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -41,10 +42,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6725732906232203" crossOrigin="anonymous"></script>
       </head>
       <body style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', margin: 0, padding: 0, fontFamily: 'Inter, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <ThemeProvider>
-          <HeaderClient />
-          <main style={{ flex: 1 }}>{children}</main>
-          <footer style={{ borderTop: '1px solid rgba(184,134,11,0.3)', backgroundColor: 'var(--bg-secondary)', marginTop: '60px' }}>
+        <LocaleProvider>
+  <ThemeProvider>
+    <HeaderClient />
+    <main style={{ flex: 1 }}>{children}</main>
+    <footer style={{ borderTop: '1px solid rgba(184,134,11,0.3)', backgroundColor: 'var(--bg-secondary)', marginTop: '60px' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 20px 32px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '40px', marginBottom: '40px' }}>
                 <div>
@@ -99,6 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </footer>
         </ThemeProvider>
+      </LocaleProvider>
       </body>
     </html>
   );

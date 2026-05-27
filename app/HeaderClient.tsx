@@ -3,12 +3,23 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 import { useTheme } from './ThemeProvider';
+import { useLocale } from './LocaleProvider';
+import { Locale } from './i18n';
 
 export default function HeaderClient() {
   const [user, setUser] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useLocale();
+
+const localeOptions = [
+  { value: 'pt', label: '🇧🇷 Português' },
+  { value: 'en', label: '🇺🇸 English' },
+  { value: 'es', label: '🇪🇸 Español' },
+];
+const localeIcon = locale === 'pt' ? '🇧🇷' : locale === 'en' ? '🇺🇸' : '🇪🇸';
+const [localeOpen, setLocaleOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -46,8 +57,8 @@ export default function HeaderClient() {
 
           {/* Nav Desktop */}
           <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>Inicio</a>
-            <a href="/contato" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>Contato</a>
+            <a href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>{t('home')}</a>
+<a href="/contato" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.9rem' }}>{t('contact')}</a>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
               <a href="https://www.tiktok.com/@hits_de_ouro" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #333' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16" height="16"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/></svg>
@@ -79,6 +90,23 @@ export default function HeaderClient() {
                 </div>
               )}
             </div>
+
+            {/* Seletor de idioma */}
+<div style={{ position: 'relative' }}>
+  <button onClick={() => setLocaleOpen(!localeOpen)} style={{ padding: '7px 12px', borderRadius: '8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+    {localeIcon} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▾</span>
+  </button>
+  {localeOpen && (
+    <div style={{ position: 'absolute', top: '110%', right: 0, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', minWidth: '160px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+      {localeOptions.map(opt => (
+        <button key={opt.value} onClick={() => { setLocale(opt.value as Locale); setLocaleOpen(false); }}
+          style={{ display: 'block', width: '100%', padding: '10px 16px', background: locale === opt.value ? 'rgba(184,134,11,0.15)' : 'transparent', border: 'none', color: locale === opt.value ? '#FFD700' : 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', fontWeight: locale === opt.value ? 'bold' : 'normal' }}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -137,8 +165,8 @@ export default function HeaderClient() {
         {/* Menu hamburguer aberto */}
         {menuOpen && (
           <div className="mobile-menu" style={{ display: 'none', flexDirection: 'column', padding: '12px 20px 16px', borderTop: '1px solid var(--border-color)', gap: '4px', background: 'var(--bg-secondary)' }}>
-            <a href="/" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>Inicio</a>
-            <a href="/contato" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>Contato</a>
+            <a href="/" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>{t('home')}</a>
+<a href="/contato" onClick={() => setMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>{t('contact')}</a>
             {user && (
               <button onClick={handleLogout} style={{ padding: '10px 0', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>Sair</button>
             )}
