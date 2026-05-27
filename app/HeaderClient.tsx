@@ -7,7 +7,7 @@ import { useLocale } from './LocaleProvider';
 import { Locale } from './i18n';
 
 const flagSVG = {
-  pt: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#009c3b"/><polygon points="0,0 10,7 0,14" fill="#FFDF00"/><circle cx="10" cy="7" r="3.5" fill="#002776"/></svg>,
+  pt: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#009c3b"/><polygon points="10,1 19,7 10,13 1,7" fill="#FFDF00"/><circle cx="10" cy="7" r="3" fill="#002776"/></svg>,
   en: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#B22234"/><rect y="2" width="20" height="1.5" fill="white"/><rect y="5" width="20" height="1.5" fill="white"/><rect y="8" width="20" height="1.5" fill="white"/><rect y="11" width="20" height="1.5" fill="white"/><rect width="8" height="7.5" fill="#3C3B6E"/></svg>,
   es: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" style={{borderRadius:'2px'}}><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg>,
 };
