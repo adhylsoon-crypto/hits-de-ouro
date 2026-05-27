@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
-const GENRES = ['Todos', 'Gospel', 'Sertanejo', 'Funk', 'Pop', 'Rock', 'Forro', 'Pagode', 'Rap', 'Reggaeton'];
+const GENRES = ['Todos', 'Gospel', 'Sertanejo', 'Eletrônica', 'Pop', 'Rock', 'Forró', 'Pagode', 'Rap', 'Reggaeton'];
 
 function ArtistCard({ item, index, onClick, isMobile }: { item: any, index: number, onClick: () => void, isMobile: boolean }) {
   const [imgSrc, setImgSrc] = useState('');
@@ -69,7 +69,7 @@ export default function Home() {
       if (!data) return;
       const feat = data.find(d => d.tipo === 'featured');
       if (feat) setFeatured(feat);
-      const tipos = ['br', 'global', 'gospel', 'rock', 'sertanejo', 'funk', 'forro', 'pagode', 'rap', 'reggaeton'];
+      const tipos = ['br', 'global', 'gospel', 'rock', 'sertanejo', 'eletronico', 'forro', 'pagode', 'rap', 'reggaeton'];
       const newLists: Record<string, any[]> = {};
       tipos.forEach(t => { newLists[t] = data.filter(d => d.tipo === t); });
       setLists(newLists);
@@ -225,7 +225,7 @@ export default function Home() {
       <Section title="✝️ Top Gospel" tipo="gospel" />
       <Section title="🎸 Top Rock" tipo="rock" />
       <Section title="🤠 Top Sertanejo" tipo="sertanejo" />
-      <Section title="🎵 Top Funk" tipo="funk" />
+      <Section title="🎧 Top Eletrônica" tipo="eletronico" />
       <Section title="🪗 Top Forro" tipo="forro" />
       <Section title="🥁 Top Pagode" tipo="pagode" />
       <Section title="🎤 Top Rap" tipo="rap" />
