@@ -14,11 +14,11 @@ export default function HeaderClient() {
   const { locale, setLocale, t } = useLocale();
 
 const localeOptions = [
-  { value: 'pt', label: '🇧🇷 Português' },
-  { value: 'en', label: '🇺🇸 English' },
-  { value: 'es', label: '🇪🇸 Español' },
+  { value: 'pt', label: '🟢 Português' },
+  { value: 'en', label: '🔵 English' },
+  { value: 'es', label: '🔴 Español' },
 ];
-const localeIcon = locale === 'pt' ? '🇧🇷' : locale === 'en' ? '🇺🇸' : '🇪🇸';
+const localeIcon = locale === 'pt' ? 'PT' : locale === 'en' ? 'EN' : 'ES';
 const [localeOpen, setLocaleOpen] = useState(false);
   const router = useRouter();
 
