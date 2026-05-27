@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
+import { useLocale } from './LocaleProvider';
 
 const GENRES = ['Todos', 'Gospel', 'Sertanejo', 'Eletrônica', 'Pop', 'Rock', 'Forró', 'Pagode', 'Rap', 'Reggaeton'];
 
@@ -53,6 +54,7 @@ export default function Home() {
   const [featuredImg, setFeaturedImg] = useState('');
   const [totalLetras, setTotalLetras] = useState(0);
   const router = useRouter();
+  const { t } = useLocale();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -163,13 +165,13 @@ export default function Home() {
       {/* Hero */}
       <div style={{ textAlign: 'center', padding: isMobile ? '20px 0 16px' : '32px 0 24px' }}>
         <h1 style={{ fontSize: isMobile ? '2rem' : '3rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b,#FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>Hits de Ouro</h1>
-        <p style={{ color: '#888', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '16px' }}>Encontre letras das suas musicas favoritas</p>
+        <p style={{ color: '#888', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '16px' }}>{t('heroSubtitle')}</p>
         <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
             <input type="text" value={search} onChange={e => handleSearchChange(e.target.value)}
-              placeholder={isMobile ? 'Ex: Anitta Funk Rave' : 'Ex: Anitta Funk Rave ou Taylor Swift Cruel Summer'}
+              placeholder={t('searchPlaceholder')}
               style={{ flex: 1, padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
-            <button type="submit" style={{ padding: isMobile ? '10px 16px' : '12px 24px', borderRadius: '12px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>Buscar</button>
+            <button type="submit" style={{ padding: isMobile ? '10px 16px' : '12px 24px', borderRadius: '12px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>{t('searchBtn')}</button>
           </form>
           {suggestions.length > 0 && (
             <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1a', border: '1px solid #b8860b', borderRadius: '12px', marginTop: '4px', zIndex: 100, overflow: 'hidden' }}>
@@ -185,10 +187,10 @@ export default function Home() {
             </div>
           )}
         </div>
-        <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '8px' }}>Digite o nome do artista seguido da musica</p>
+        <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '8px' }}>{t('searchHint')}</p>
 {totalLetras > 0 && (
   <p style={{ color: '#b8860b', fontSize: '0.8rem', marginTop: '6px' }}>
-    🎵 {totalLetras.toLocaleString('pt-BR')} letras disponíveis
+    🎵 {totalLetras.toLocaleString('pt-BR')} {t('lyricsAvailable')}
   </p>
 )}
       </div>
@@ -208,28 +210,27 @@ export default function Home() {
           {featuredImg && <img src={featuredImg} alt={featured.song} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to right,rgba(0,0,0,0.95) 40%,transparent)', display: 'flex', alignItems: 'center', padding: isMobile ? '20px' : '40px' }}>
             <div>
-              <span style={{ background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', padding: '3px 10px', borderRadius: '999px', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: 'bold', marginBottom: '8px', display: 'inline-block' }}>DESTAQUE DA SEMANA</span>
+              <span style={{ background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', padding: '3px 10px', borderRadius: '999px', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: 'bold', marginBottom: '8px', display: 'inline-block' }}>{t('featuredWeek')}</span>
               <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.5rem', fontWeight: 'bold', color: 'white', margin: '6px 0 4px' }}>{featured.song}</h2>
               <p style={{ color: '#FFD700', fontSize: isMobile ? '0.9rem' : '1.1rem', marginBottom: '6px' }}>{featured.artist}</p>
               {!isMobile && featured.description && <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '20px' }}>{featured.description}</p>}
-              <button style={{ padding: isMobile ? '8px 20px' : '12px 28px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: isMobile ? '0.85rem' : '1rem', marginTop: isMobile ? '8px' : '0' }}>Ver letra</button>
+              <button style={{ padding: isMobile ? '8px 20px' : '12px 28px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: isMobile ? '0.85rem' : '1rem', marginTop: isMobile ? '8px' : '0' }}>{t('viewLyric')}</button>
             </div>
           </div>
         </div>
       )}
 
       <AdBanner isMobile={isMobile} />
-      <Section title="🇧🇷 Top Musicas Brasileiras" tipo="br" />
-      <AdBanner isMobile={isMobile} />
-      <Section title="🌍 Top Classicos Globais" tipo="global" />
-      <Section title="✝️ Top Gospel" tipo="gospel" />
-      <Section title="🎸 Top Rock" tipo="rock" />
-      <Section title="🤠 Top Sertanejo" tipo="sertanejo" />
-      <Section title="🎧 Top Eletrônica" tipo="eletronico" />
-      <Section title="🪗 Top Forro" tipo="forro" />
-      <Section title="🥁 Top Pagode" tipo="pagode" />
-      <Section title="🎤 Top Rap" tipo="rap" />
-      <Section title="💃 Top Reggaeton" tipo="reggaeton" />
+      <Section title={t('topBR')} tipo="br" />
+<Section title={t('topGlobal')} tipo="global" />
+<Section title={t('topGospel')} tipo="gospel" />
+<Section title={t('topRock')} tipo="rock" />
+<Section title={t('topSertanejo')} tipo="sertanejo" />
+<Section title={t('topEletronico')} tipo="eletronico" />
+<Section title={t('topForro')} tipo="forro" />
+<Section title={t('topPageode')} tipo="pagode" />
+<Section title={t('topRap')} tipo="rap" />
+<Section title={t('topReggaeton')} tipo="reggaeton" />
     </div>
   );
 }
