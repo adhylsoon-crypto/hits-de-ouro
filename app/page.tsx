@@ -149,8 +149,9 @@ export default function Home() {
   const filteredLists = getFilteredLists();
   const gridCols = isMobile ? '1fr' : 'repeat(2, 1fr)';
 
-  const Section = ({ title, tipo, flag }: { title: string, tipo: string, flag?: string }) => {
-    const items = filteredLists[tipo] || [];
+  const Section = ({ title, tipo, flag, limit }: { title: string, tipo: string, flag?: string, limit?: number }) => {
+    const allItems = filteredLists[tipo] || [];
+    const items = limit ? allItems.slice(0, limit) : allItems;
     if (items.length === 0) return null;
     return (
       <section style={{ marginBottom: '40px' }}>
@@ -161,6 +162,13 @@ export default function Home() {
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '10px' }}>
           {items.map((item, i) => <ArtistCard key={i} item={item} index={i} onClick={() => goToLyric(item.artist, item.song)} isMobile={isMobile} />)}
         </div>
+        {limit && allItems.length > limit && (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <a href={'/' + tipo} style={{ padding: '10px 28px', borderRadius: '10px', background: 'transparent', border: '1px solid #b8860b', color: '#FFD700', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.9rem' }}>
+              Ver todos os {allItems.length} hinos →
+            </a>
+          </div>
+        )}
       </section>
     );
   };
@@ -241,7 +249,7 @@ export default function Home() {
       <Section title={t('topBR')} tipo="br" />
 <Section title={t('topGlobal')} tipo="global" />
 <Section title={t('topGospel')} tipo="gospel" />
-<Section title="🎼 Top Harpa Cristã" tipo="harpa" />
+<Section title="🎼 Top Harpa Cristã" tipo="harpa" limit={10} />
 <Section title={t('topRock')} tipo="rock" />
 <Section title={t('topSertanejo')} tipo="sertanejo" />
 <Section title={t('topEletronico')} tipo="eletronico" />
