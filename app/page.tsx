@@ -9,6 +9,10 @@ const GENRES = ['Todos', 'Gospel', 'Harpa', 'Sertanejo', 'Eletrônica', 'Pop', '
 function ArtistCard({ item, index, onClick, isMobile }: { item: any, index: number, onClick: () => void, isMobile: boolean }) {
   const [imgSrc, setImgSrc] = useState('');
   useEffect(() => {
+    if (item.artist === 'Harpa Cristã') {
+      setImgSrc('/harpa.jpg');
+      return;
+    }
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(item.artist + ' ' + item.song) + '&entity=song&limit=1')
       .then(r => r.json())
       .then(data => {
