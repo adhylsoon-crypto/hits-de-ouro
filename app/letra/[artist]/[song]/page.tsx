@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../../lib/supabase';
 import { useLocale } from '../../../LocaleProvider';
+import { useRouter } from 'next/navigation';
 
 export default function LetraPage() {
   const params = useParams();
@@ -34,6 +35,8 @@ export default function LetraPage() {
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState('');
   const [comentarioLoading, setComentarioLoading] = useState(false);
+const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -153,6 +156,13 @@ export default function LetraPage() {
   }, [artist, song]);
 
   const youtubeUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(artist + ' ' + song + ' oficial');
+  const handleSearchLyric = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!searchQuery.trim()) return;
+  const parts = searchQuery.trim().split(' ');
+  router.push('/letra/' + encodeURIComponent(parts[0]) + '/' + encodeURIComponent(parts.slice(1).join(' ') || parts[0]));
+  setSearchQuery('');
+};
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '12px' : '20px' }}>
@@ -332,6 +342,17 @@ export default function LetraPage() {
           </div>
         </div>
       )}
+      {/* Barra de busca flutuante */}
+<div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 99, width: isMobile ? 'calc(100% - 32px)' : '600px' }}>
+  <form onSubmit={handleSearchLyric} style={{ display: 'flex', gap: '8px', background: 'var(--bg-card)', borderRadius: '16px', padding: '8px', border: '1px solid #b8860b', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+      placeholder={t('searchPlaceholder')}
+      style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none' }} />
+    <button type="submit" style={{ padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+      {t('searchBtn')}
+    </button>
+  </form>
+</div>
     </div>
   );
 }
