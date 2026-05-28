@@ -27,14 +27,28 @@ export async function GET(request: NextRequest) {
       .select('artist, song, lyrics, compositor, enviado_por_nome');
 
     if (rows && rows.length > 0) {
+      // Extrai palavras significativas (mais de 2 letras) para comparação
+      const songWords = songN.split(/\s+/).filter((w: string) => w.length > 2);
+      const artistWords = artistN.split(/\s+/).filter((w: string) => w.length > 2);
+
       const found = rows.find((r: any) => {
         const rArtist = normalize(r.artist);
         const rSong = normalize(r.song);
-        return (
+
+        // Match exato normalizado
+        const exactMatch =
           (rArtist.includes(artistS) || artistS.includes(rArtist) || rArtist.includes(artistN) || artistN.includes(rArtist)) &&
-          (rSong.includes(songS) || songS.includes(rSong) || rSong.includes(songN) || songN.includes(rSong))
-        );
+          (rSong.includes(songS) || songS.includes(rSong) || rSong.includes(songN) || songN.includes(rSong));
+
+        if (exactMatch) return true;
+
+        // Match por palavras-chave — útil para hinos com "- Hino 49" no nome
+        const artistMatch = artistWords.length > 0 && artistWords.every((w: string) => rArtist.includes(w));
+        const songMatch = songWords.length > 0 && songWords.filter((w: string) => rSong.includes(w)).length >= Math.min(2, songWords.length);
+
+        return artistMatch && songMatch;
       });
+
       if (found?.lyrics && found.lyrics.trim().length > 50) {
         return NextResponse.json({
           lyrics: found.lyrics.trim(),
