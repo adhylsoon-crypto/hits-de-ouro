@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 import { useLocale } from './LocaleProvider';
 
-const GENRES = ['Todos', 'Gospel', 'Sertanejo', 'Eletrônica', 'Pop', 'Rock', 'Forró', 'Pagode', 'Rap', 'Reggaeton'];
+const GENRES = ['Todos', 'Gospel', 'Harpa', 'Sertanejo', 'Eletrônica', 'Pop', 'Rock', 'Forró', 'Pagode', 'Rap', 'Reggaeton'];
 
 function ArtistCard({ item, index, onClick, isMobile }: { item: any, index: number, onClick: () => void, isMobile: boolean }) {
   const [imgSrc, setImgSrc] = useState('');
