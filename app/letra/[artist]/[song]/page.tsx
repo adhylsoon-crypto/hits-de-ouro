@@ -247,10 +247,10 @@ const [searchQuery, setSearchQuery] = useState('');
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
               {translating && <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{t('loadingTranslation')}</p>}
               {lyricsLines.map((line, i) => (
-                <div key={i} style={{ marginBottom: line === '' ? '16px' : '2px' }}>
-                  {line !== '' && (
-                    <>
-                      <p style={{ margin: 0, fontSize: fontSize + 'px', color: '#e5e5e5', lineHeight: '1.8' }}>{line}</p>
+  <div key={i} style={{ marginBottom: line === '' ? '20px' : '0px' }}>
+    {line !== '' && (
+      <>
+        <p style={{ margin: 0, fontSize: fontSize + 'px', color: 'var(--text-primary)', lineHeight: '1.8' }}>{line}</p>
                       {showTranslation && translatedLines[i] && translatedLines[i].trim() !== '' && (
                         <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.5', fontStyle: 'italic', marginBottom: '4px' }}>{translatedLines[i]}</p>
                       )}
