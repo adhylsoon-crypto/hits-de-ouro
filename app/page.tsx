@@ -71,7 +71,7 @@ export default function Home() {
       if (!data) return;
       const feat = data.find(d => d.tipo === 'featured');
       if (feat) setFeatured(feat);
-      const tipos = ['br', 'global', 'gospel', 'rock', 'sertanejo', 'eletronico', 'forro', 'pagode', 'rap', 'reggaeton'];
+      const tipos = ['br', 'global', 'gospel', 'harpa', 'rock', 'sertanejo', 'eletronico', 'forro', 'pagode', 'rap', 'reggaeton'];
       const newLists: Record<string, any[]> = {};
       tipos.forEach(t => { newLists[t] = data.filter(d => d.tipo === t); });
       setLists(newLists);
@@ -241,6 +241,7 @@ export default function Home() {
       <Section title={t('topBR')} tipo="br" />
 <Section title={t('topGlobal')} tipo="global" />
 <Section title={t('topGospel')} tipo="gospel" />
+<Section title="🎼 Top Harpa Cristã" tipo="harpa" />
 <Section title={t('topRock')} tipo="rock" />
 <Section title={t('topSertanejo')} tipo="sertanejo" />
 <Section title={t('topEletronico')} tipo="eletronico" />
@@ -248,6 +249,31 @@ export default function Home() {
 <Section title={t('topPageode')} tipo="pagode" />
 <Section title={t('topRap')} tipo="rap" />
 <Section title={t('topReggaeton')} tipo="reggaeton" />
+
+      {/* Barra de busca flutuante */}
+      <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 99, width: isMobile ? 'calc(100% - 32px)' : '600px' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', background: 'var(--bg-card)', borderRadius: '16px', padding: '8px', border: '1px solid #b8860b', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <input type="text" value={search} onChange={e => handleSearchChange(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none' }} />
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+            {t('searchBtn')}
+          </button>
+        </form>
+        {suggestions.length > 0 && (
+          <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid #b8860b', borderRadius: '12px', marginBottom: '8px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+            {suggestions.map((s, i) => (
+              <div key={i} onClick={() => goToLyric(s.artist, s.song)} style={{ padding: '10px 16px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span>♪</span>
+                <div>
+                  <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', margin: 0 }}>{s.song}</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0 }}>{s.artist}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
