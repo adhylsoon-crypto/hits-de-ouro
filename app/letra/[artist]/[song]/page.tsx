@@ -129,7 +129,7 @@ const [searchQuery, setSearchQuery] = useState('');
       .then(data => {
         if (data?.lyrics) {
           setLyrics(data.lyrics);
-          setLyricsLines(data.lyrics.split('\n'));
+          setLyricsLines(data.lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n'));
           setEnviador(data.enviado_por_nome || '');
           setCompositorLetra(data.compositor || '');
           const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele', 'meu', 'minha'];
