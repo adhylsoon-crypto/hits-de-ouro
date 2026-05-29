@@ -28,8 +28,8 @@ export default function LetraPage() {
   const [showForm, setShowForm] = useState(false);
   const [letraEnviada, setLetraEnviada] = useState('');
   const [compositor, setCompositor] = useState('');
-  const [formArtist, setFormArtist] = useState(artist);
-const [formSong, setFormSong] = useState(song);
+  const [formArtist, setFormArtist] = useState('');
+  const [formSong, setFormSong] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [formMsg, setFormMsg] = useState('');
   const [enviador, setEnviador] = useState('');
@@ -37,7 +37,7 @@ const [formSong, setFormSong] = useState(song);
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState('');
   const [comentarioLoading, setComentarioLoading] = useState(false);
-const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -85,17 +85,15 @@ const [searchQuery, setSearchQuery] = useState('');
     setFavLoading(false);
   };
 
+  const abrirForm = () => {
+    setFormArtist(artist);
+    setFormSong(song);
+    setShowForm(true);
+  };
+
   const enviarLetra = async () => {
     if (!letraEnviada.trim() || letraEnviada.trim().length < 50) { setFormMsg(t('minChars')); return; }
-    // Validação: artista e música não podem ser iguais
-    if (formArtist.trim().toLowerCase() === formSong.trim().toLowerCase()) {
-      setFormMsg('⚠️ Artista e música não podem ser iguais.'); return;
-    }
-    // Validação: artista não pode conter o nome da música e vice-versa
-    if (formArtist.trim().toLowerCase().includes(formSong.trim().toLowerCase()) ||
-        formSong.trim().toLowerCase().includes(formArtist.trim().toLowerCase())) {
-      setFormMsg('⚠️ Verifique se o artista e a música estão nos campos corretos.'); return;
-    }
+    if (!formArtist.trim() || !formSong.trim()) { setFormMsg('Preencha o artista e o nome da música.'); return; }
     setFormLoading(true);
     setFormMsg('');
     const { error } = await supabase.from('letras_pendentes').insert({
@@ -114,7 +112,6 @@ const [searchQuery, setSearchQuery] = useState('');
     }
     setFormLoading(false);
   };
-  
 
   const enviarComentario = async () => {
     if (!novoComentario.trim()) return;
@@ -145,7 +142,7 @@ const [searchQuery, setSearchQuery] = useState('');
           setCompositorLetra(data.compositor || '');
           const ptWords = ['de', 'que', 'eu', 'nao', 'voce', 'com', 'uma', 'para', 'por', 'mas', 'ela', 'ele', 'meu', 'minha'];
           const lower = data.lyrics.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const ptCount = ptWords.filter(w => lower.includes(' ' + w + ' ')).length;
+          const ptCount = ptWords.filter((w: string) => lower.includes(' ' + w + ' ')).length;
           const isBr = ptCount >= 3;
           setIsPt(isBr);
           if (!isBr) {
@@ -167,13 +164,14 @@ const [searchQuery, setSearchQuery] = useState('');
   }, [artist, song]);
 
   const youtubeUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(artist + ' ' + song + ' oficial');
+
   const handleSearchLyric = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!searchQuery.trim()) return;
-  const parts = searchQuery.trim().split(' ');
-  router.push('/letra/' + encodeURIComponent(parts[0]) + '/' + encodeURIComponent(parts.slice(1).join(' ') || parts[0]));
-  setSearchQuery('');
-};
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    const parts = searchQuery.trim().split(' ');
+    router.push('/letra/' + encodeURIComponent(parts[0]) + '/' + encodeURIComponent(parts.slice(1).join(' ') || parts[0]));
+    setSearchQuery('');
+  };
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '12px' : '20px' }}>
@@ -184,10 +182,10 @@ const [searchQuery, setSearchQuery] = useState('');
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.8rem', fontWeight: 'bold', background: 'linear-gradient(135deg,#FFD700,#b8860b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song}</h1>
           <a href={'/artista/' + encodeURIComponent(artist)} style={{ color: '#aaa', fontSize: '0.9rem', marginTop: '2px', textDecoration: 'none', display: 'block' }}
-  onMouseEnter={e => (e.currentTarget.style.color = '#FFD700')}
-  onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
-  {artist}
-</a>
+            onMouseEnter={e => (e.currentTarget.style.color = '#FFD700')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}>
+            {artist}
+          </a>
           <a href="/" style={{ color: '#b8860b', fontSize: '0.8rem', textDecoration: 'none' }}>{t('back')}</a>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -205,6 +203,8 @@ const [searchQuery, setSearchQuery] = useState('');
       )}
 
       <div style={{ display: 'flex', gap: '24px', flexDirection: isMobile ? 'column' : 'row' }}>
+
+        {/* Coluna principal */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => setFontSize(f => Math.max(12, f - 2))} style={{ padding: '6px 12px', borderRadius: '8px', background: '#1a1a1a', border: '1px solid #b8860b', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>A-</button>
@@ -219,7 +219,12 @@ const [searchQuery, setSearchQuery] = useState('');
             )}
           </div>
 
-          {loading && <div style={{ textAlign: 'center', paddingTop: '80px' }}><p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p><p style={{ color: '#888' }}>{t('loadingLyric')}</p></div>}
+          {loading && (
+            <div style={{ textAlign: 'center', paddingTop: '80px' }}>
+              <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>♪</p>
+              <p style={{ color: '#888' }}>{t('loadingLyric')}</p>
+            </div>
+          )}
 
           {notFound && !loading && (
             <div style={{ textAlign: 'center', paddingTop: '60px' }}>
@@ -227,55 +232,52 @@ const [searchQuery, setSearchQuery] = useState('');
               <p style={{ color: '#888', marginBottom: '24px' }}>{t('lyricsNotFound')}</p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 24px', borderRadius: '10px', background: '#cc0000', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>▶ {t('searchYoutube')}</a>
-                <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{t('sendLyric')}</button>
+                <button onClick={abrirForm} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{t('sendLyric')}</button>
               </div>
+
               {showForm && (
-  <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
-    <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>{t('sendLyricTitle')} {song}</h3>
-    {!user ? (
-      <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{t('loginToSend')} <a href="/login" style={{ color: '#FFD700' }}>{t('loginToSend2')}</a> {t('loginToSend3')}</p>
-    ) : (
-      <>
-        {/* Campo Artista */}
-        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎤 Artista</label>
-        <input value={formArtist} onChange={e => setFormArtist(e.target.value)}
-          placeholder="Ex: Luan Santana"
-          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-        {/* Campo Música */}
-        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎵 Nome da Música</label>
-        <input value={formSong} onChange={e => setFormSong(e.target.value)}
-          placeholder="Ex: Água Com Açúcar"
-          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-        {/* Aviso visual */}
-        <div style={{ background: 'rgba(184,134,11,0.1)', border: '1px solid #b8860b33', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', fontSize: '0.8rem', color: '#b8860b' }}>
-          ⚠️ Verifique se o <strong>artista</strong> e o <strong>nome da música</strong> estão corretos antes de enviar.
-        </div>
-        {/* Letra */}
-        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>📝 Letra</label>
-        <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)}
-          placeholder={t('pasteLyric') + ' (' + song + ')'} rows={10}
-          style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-        <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder={t('composerPlaceholder')}
-          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-        {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
-            {formLoading ? t('sending') : t('send')}
-          </button>
-          <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>{t('cancel')}</button>
-        </div>
-      </>
-    )}
-  </div>
-)}
+                <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
+                  <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>{t('sendLyricTitle')} {song}</h3>
+                  {!user ? (
+                    <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{t('loginToSend')} <a href="/login" style={{ color: '#FFD700' }}>{t('loginToSend2')}</a> {t('loginToSend3')}</p>
+                  ) : (
+                    <>
+                      <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎤 Artista</label>
+                      <input value={formArtist} onChange={e => setFormArtist(e.target.value)} placeholder="Ex: Luan Santana"
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎵 Nome da Música</label>
+                      <input value={formSong} onChange={e => setFormSong(e.target.value)} placeholder="Ex: Água Com Açúcar"
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      <div style={{ background: 'rgba(184,134,11,0.1)', border: '1px solid #b8860b33', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', fontSize: '0.8rem', color: '#b8860b' }}>
+                        ⚠️ Verifique se o <strong>artista</strong> e o <strong>nome da música</strong> estão corretos antes de enviar.
+                      </div>
+                      <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>📝 Letra</label>
+                      <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)} placeholder={t('pasteLyric') + ' (' + song + ')'} rows={10}
+                        style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder={t('composerPlaceholder')}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                      {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
+                          {formLoading ? t('sending') : t('send')}
+                        </button>
+                        <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>{t('cancel')}</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
               {translating && <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{t('loadingTranslation')}</p>}
               {lyricsLines.map((line, i) => (
-  <div key={i} style={{ marginBottom: line === '' ? '20px' : '0px' }}>
-    {line !== '' && (
-      <>
-        <p style={{ margin: 0, fontSize: fontSize + 'px', color: 'var(--text-primary)', lineHeight: '1.8' }}>{line}</p>
+                <div key={i} style={{ marginBottom: line === '' ? '20px' : '0px' }}>
+                  {line !== '' && (
+                    <>
+                      <p style={{ margin: 0, fontSize: fontSize + 'px', color: 'var(--text-primary)', lineHeight: '1.8' }}>{line}</p>
                       {showTranslation && translatedLines[i] && translatedLines[i].trim() !== '' && (
                         <p style={{ margin: 0, fontSize: (fontSize - 2) + 'px', color: '#FFD700', lineHeight: '1.5', fontStyle: 'italic', marginBottom: '4px' }}>{translatedLines[i]}</p>
                       )}
@@ -283,8 +285,6 @@ const [searchQuery, setSearchQuery] = useState('');
                   )}
                 </div>
               ))}
-
-              {/* Créditos */}
               <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #333' }}>
                 {compositorLetra && <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '4px' }}>{t('composition')} {compositorLetra}</p>}
                 {enviador && <p style={{ color: '#666', fontSize: '0.8rem' }}>{t('sentBy')} {enviador}</p>}
@@ -296,7 +296,6 @@ const [searchQuery, setSearchQuery] = useState('');
           {!loading && !notFound && (
             <div style={{ marginTop: '32px' }}>
               <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '16px' }}>{t('comments')}</h3>
-
               {user ? (
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'flex-start' }}>
                   <textarea value={novoComentario} onChange={e => setNovoComentario(e.target.value)} placeholder={t('writeComment')} rows={3}
@@ -310,9 +309,7 @@ const [searchQuery, setSearchQuery] = useState('');
                   <a href="/login" style={{ color: '#FFD700' }}>{t('enter')}</a> {t('loginToComment')}
                 </p>
               )}
-
               {comentarios.length === 0 && <p style={{ color: '#555', fontSize: '0.85rem' }}>{t('noComments')}</p>}
-
               {comentarios.map(c => (
                 <div key={c.id} style={{ background: '#1a1a1a', borderRadius: '12px', padding: '14px 16px', border: '1px solid #222', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -367,17 +364,18 @@ const [searchQuery, setSearchQuery] = useState('');
           </div>
         </div>
       )}
+
       {/* Barra de busca flutuante */}
-<div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 99, width: isMobile ? 'calc(100% - 32px)' : '600px' }}>
-  <form onSubmit={handleSearchLyric} style={{ display: 'flex', gap: '8px', background: 'var(--bg-card)', borderRadius: '16px', padding: '8px', border: '1px solid #b8860b', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-      placeholder={t('searchPlaceholder')}
-      style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none' }} />
-    <button type="submit" style={{ padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
-      {t('searchBtn')}
-    </button>
-  </form>
-</div>
+      <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 99, width: isMobile ? 'calc(100% - 32px)' : '600px' }}>
+        <form onSubmit={handleSearchLyric} style={{ display: 'flex', gap: '8px', background: 'var(--bg-card)', borderRadius: '16px', padding: '8px', border: '1px solid #b8860b', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none' }} />
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+            {t('searchBtn')}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
