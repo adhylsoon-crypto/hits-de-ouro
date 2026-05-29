@@ -28,6 +28,8 @@ export default function LetraPage() {
   const [showForm, setShowForm] = useState(false);
   const [letraEnviada, setLetraEnviada] = useState('');
   const [compositor, setCompositor] = useState('');
+  const [formArtist, setFormArtist] = useState(artist);
+const [formSong, setFormSong] = useState(song);
   const [formLoading, setFormLoading] = useState(false);
   const [formMsg, setFormMsg] = useState('');
   const [enviador, setEnviador] = useState('');
@@ -84,26 +86,35 @@ const [searchQuery, setSearchQuery] = useState('');
   };
 
   const enviarLetra = async () => {
-    if (!letraEnviada.trim() || letraEnviada.trim().length < 50) { setFormMsg('A letra precisa ter pelo menos 50 caracteres.'); return; }
+    if (!letraEnviada.trim() || letraEnviada.trim().length < 50) { setFormMsg(t('minChars')); return; }
+    // Validação: artista e música não podem ser iguais
+    if (formArtist.trim().toLowerCase() === formSong.trim().toLowerCase()) {
+      setFormMsg('⚠️ Artista e música não podem ser iguais.'); return;
+    }
+    // Validação: artista não pode conter o nome da música e vice-versa
+    if (formArtist.trim().toLowerCase().includes(formSong.trim().toLowerCase()) ||
+        formSong.trim().toLowerCase().includes(formArtist.trim().toLowerCase())) {
+      setFormMsg('⚠️ Verifique se o artista e a música estão nos campos corretos.'); return;
+    }
     setFormLoading(true);
     setFormMsg('');
-    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
     const { error } = await supabase.from('letras_pendentes').insert({
-      artist, song,
+      artist: formArtist.trim(),
+      song: formSong.trim(),
       lyrics: letraEnviada.trim(),
       compositor: compositor.trim(),
       enviado_por: user.id,
       email_enviado: user.email,
     });
-    if (error) { setFormMsg('Erro ao enviar. Tente novamente.'); }
+    if (error) { setFormMsg(t('errorSend')); }
     else {
-      setFormMsg('✅ Letra enviada com sucesso! Será revisada em breve.');
+      setFormMsg(t('successSend'));
       setLetraEnviada('');
       setCompositor('');
-    
     }
     setFormLoading(false);
   };
+  
 
   const enviarComentario = async () => {
     if (!novoComentario.trim()) return;
@@ -219,30 +230,44 @@ const [searchQuery, setSearchQuery] = useState('');
                 <button onClick={() => setShowForm(true)} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{t('sendLyric')}</button>
               </div>
               {showForm && (
-                <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
-                  <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>{t('sendLyricTitle')} {song}</h3>
-                  {!user ? (
-                    <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{t('loginToSend')} <a href="/login" style={{ color: '#FFD700' }}>{t('loginToSend2')}</a> {t('loginToSend3')}</p>
-                  ) : (
-                    <>
-                      <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)} placeholder={t('pasteLyric') + ' (' + song + ')'} rows={10}
-                        style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-                      <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder={t('composerPlaceholder')}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
-                      {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
-                          {formLoading ? t('sending') : t('send')}
-                        </button>
-                        <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>{t('cancel')}</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
+  <div style={{ marginTop: '32px', background: '#1a1a1a', borderRadius: '16px', padding: '24px', border: '1px solid #b8860b', textAlign: 'left', maxWidth: '600px', margin: '32px auto 0' }}>
+    <h3 style={{ color: '#FFD700', marginBottom: '16px', fontSize: '1.1rem' }}>{t('sendLyricTitle')} {song}</h3>
+    {!user ? (
+      <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{t('loginToSend')} <a href="/login" style={{ color: '#FFD700' }}>{t('loginToSend2')}</a> {t('loginToSend3')}</p>
+    ) : (
+      <>
+        {/* Campo Artista */}
+        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎤 Artista</label>
+        <input value={formArtist} onChange={e => setFormArtist(e.target.value)}
+          placeholder="Ex: Luan Santana"
+          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+        {/* Campo Música */}
+        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>🎵 Nome da Música</label>
+        <input value={formSong} onChange={e => setFormSong(e.target.value)}
+          placeholder="Ex: Água Com Açúcar"
+          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #b8860b', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+        {/* Aviso visual */}
+        <div style={{ background: 'rgba(184,134,11,0.1)', border: '1px solid #b8860b33', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', fontSize: '0.8rem', color: '#b8860b' }}>
+          ⚠️ Verifique se o <strong>artista</strong> e o <strong>nome da música</strong> estão corretos antes de enviar.
+        </div>
+        {/* Letra */}
+        <label style={{ color: '#888', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}>📝 Letra</label>
+        <textarea value={letraEnviada} onChange={e => setLetraEnviada(e.target.value)}
+          placeholder={t('pasteLyric') + ' (' + song + ')'} rows={10}
+          style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.9rem', resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+        <input value={compositor} onChange={e => setCompositor(e.target.value)} placeholder={t('composerPlaceholder')}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#111', border: '1px solid #333', color: 'white', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+        {formMsg && <p style={{ color: formMsg.includes('sucesso') ? '#4ade80' : '#f87171', fontSize: '0.85rem', marginBottom: '8px' }}>{formMsg}</p>}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={enviarLetra} disabled={formLoading} style={{ padding: '10px 24px', borderRadius: '10px', background: 'linear-gradient(135deg,#FFD700,#b8860b)', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: formLoading ? 0.7 : 1 }}>
+            {formLoading ? t('sending') : t('send')}
+          </button>
+          <button onClick={() => { setShowForm(false); setLetraEnviada(''); setCompositor(''); setFormMsg(''); }} style={{ padding: '10px 24px', borderRadius: '10px', background: 'transparent', border: '1px solid #333', color: '#888', cursor: 'pointer' }}>{t('cancel')}</button>
+        </div>
+      </>
+    )}
+  </div>
+)}
           {!loading && !notFound && (
             <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: isMobile ? '16px' : '28px', border: '1px solid #b8860b' }}>
               {translating && <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{t('loadingTranslation')}</p>}
