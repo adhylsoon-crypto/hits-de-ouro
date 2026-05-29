@@ -33,9 +33,27 @@ export default function AdminPage() {
   };
 
   const aprovar = async (item: any) => {
+    // Detecta se artista e música estão invertidos
+    // Se o campo "artist" parece ser uma música (tem mais de 3 palavras ou o song contém um artista conhecido)
+    let finalArtist = item.artist;
+    let finalSong = item.song;
+
+    // Verifica se existe artista no banco com o nome da música
+    const { data: artistCheck } = await supabase
+      .from('letras')
+      .select('artist')
+      .ilike('artist', '%' + item.song.split(' ').slice(-2).join(' ') + '%')
+      .limit(1);
+
+    if (artistCheck && artistCheck.length > 0) {
+      // Provavelmente invertido — inverte os campos
+      finalArtist = item.song.split(' ').slice(-2).join(' ');
+      finalSong = item.song.replace(finalArtist, '').trim();
+    }
+
     const { error } = await supabase.from('letras').upsert({
-      artist: item.artist,
-      song: item.song,
+      artist: finalArtist,
+      song: finalSong,
       lyrics: item.lyrics,
       compositor: item.compositor || '',
       enviado_por_nome: item.email_enviado?.split('@')[0] || '',
@@ -44,6 +62,8 @@ export default function AdminPage() {
     if (!error) {
       await supabase.from('letras_pendentes').update({ status: 'aprovado' }).eq('id', item.id);
       setPendentes(prev => prev.filter(p => p.id !== item.id));
+    } else {
+      alert('Erro ao aprovar: ' + error.message);
     }
   };
 

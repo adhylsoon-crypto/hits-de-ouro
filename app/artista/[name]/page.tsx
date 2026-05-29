@@ -12,8 +12,24 @@ export default function ArtistaPage() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.from('letras').select('artist, song').ilike('artist', '%' + name + '%').order('song')
-      .then(({ data }) => { setLetras(data || []); setLoading(false); });
+    // Busca onde artist contém o nome OU song contém o nome (para músicas salvas invertidas)
+    Promise.all([
+      supabase.from('letras').select('artist, song').ilike('artist', '%' + name + '%').order('song'),
+      supabase.from('letras').select('artist, song').ilike('song', '%' + name + '%').order('song')
+    ]).then(([r1, r2]) => {
+      const all = [...(r1.data || []), ...(r2.data || [])];
+      // Remove duplicatas
+      const unique = all.filter((item, index, self) =>
+        index === self.findIndex(t => t.artist === item.artist && t.song === item.song)
+      );
+      // Filtra para mostrar só músicas onde o artista OU a música faz sentido
+      const filtered = unique.filter(item => {
+        const artistMatch = item.artist.toLowerCase().includes(name.toLowerCase());
+        return artistMatch;
+      });
+      setLetras(filtered);
+      setLoading(false);
+    });
 
     fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(name) + '&entity=musicArtist&limit=1')
       .then(r => r.json()).then(data => {
