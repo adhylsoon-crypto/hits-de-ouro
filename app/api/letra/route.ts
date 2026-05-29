@@ -27,26 +27,36 @@ export async function GET(request: NextRequest) {
       .select('artist, song, lyrics, compositor, enviado_por_nome');
 
     if (rows && rows.length > 0) {
-      // Extrai palavras significativas (mais de 2 letras) para comparação
       const songWords = songN.split(/\s+/).filter((w: string) => w.length > 2);
       const artistWords = artistN.split(/\s+/).filter((w: string) => w.length > 2);
+
+      // Junta tudo para busca combinada (caso usuário inverta artista/música)
+      const allWords = [...artistWords, ...songWords];
 
       const found = rows.find((r: any) => {
         const rArtist = normalize(r.artist);
         const rSong = normalize(r.song);
 
-        // Match exato normalizado
+        // Match exato normalizado (ordem correta)
         const exactMatch =
           (rArtist.includes(artistS) || artistS.includes(rArtist) || rArtist.includes(artistN) || artistN.includes(rArtist)) &&
           (rSong.includes(songS) || songS.includes(rSong) || rSong.includes(songN) || songN.includes(rSong));
 
         if (exactMatch) return true;
 
-        // Match por palavras-chave — útil para hinos com "- Hino 49" no nome
-        const artistMatch = artistWords.length > 0 && artistWords.every((w: string) => rArtist.includes(w));
-        const songMatch = songWords.length > 0 && songWords.filter((w: string) => rSong.includes(w)).length >= Math.min(2, songWords.length);
+        // Match invertido — usuário digitou música como artista e artista como música
+        const invertedMatch =
+          (rSong.includes(artistS) || artistS.includes(rSong) || rSong.includes(artistN) || artistN.includes(rSong)) &&
+          (rArtist.includes(songS) || songS.includes(rArtist) || rArtist.includes(songN) || songN.includes(rArtist));
 
-        return artistMatch && songMatch;
+        if (invertedMatch) return true;
+
+        // Match por palavras-chave combinadas — útil para hinos e buscas parciais
+        const rAll = rArtist + ' ' + rSong;
+        const combinedMatch = allWords.length >= 2 &&
+          allWords.filter((w: string) => rAll.includes(w)).length >= Math.min(3, allWords.length);
+
+        return combinedMatch;
       });
 
       if (found?.lyrics && found.lyrics.trim().length > 50) {
