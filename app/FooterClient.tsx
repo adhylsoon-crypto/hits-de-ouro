@@ -22,6 +22,7 @@ export default function FooterClient() {
           <div>
             <p style={{ color: '#FFD700', fontWeight: 'bold', marginBottom: '16px', fontSize: '0.9rem' }}>Institucional</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <a href="/sobre" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.85rem' }}>Sobre Nós</a>
               <a href="/termos" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.85rem' }}>Termos de Uso</a>
               <a href="/privacidade" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.85rem' }}>Privacidade</a>
               <a href="/contato" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.85rem' }}>{t('contact')}</a>
